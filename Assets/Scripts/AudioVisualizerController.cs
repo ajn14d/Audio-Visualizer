@@ -8,9 +8,9 @@ public class AudioVisualizerController : MonoBehaviour
     public Slider waveHeightSlider; // UI Slider for adjusting waveform height
     public int selectedDeviceIndex = 1; // Set in Inspector
     public int sampleRate = 44100;
-    public int recordingLength = 30; // seconds
-    public int numSamples = 4096; // Number of samples for visualization
-    public float waveformHeight = 5f; // Default scale factor for waveform visualization
+    public int recordingLength = 1; // seconds
+    public int numSamples = 1024; // Number of samples for visualization
+    public float waveformHeight = 1f; // Default scale factor for waveform visualization
     private float[] samples; // Buffer for audio samples
 
     void Start()
@@ -35,8 +35,8 @@ public class AudioVisualizerController : MonoBehaviour
         // Ensure WaveHeightSlider exists
         if (waveHeightSlider != null)
         {
-            waveHeightSlider.minValue = 0.5f; // Prevents wave from being invisible
-            waveHeightSlider.maxValue = 10f;  // Adjust as needed
+            waveHeightSlider.minValue = 0.01f; // Prevents wave from being invisible
+            waveHeightSlider.maxValue = 100f;  // Adjust as needed
             waveHeightSlider.value = waveformHeight; // Initialize with default value
             waveHeightSlider.onValueChanged.AddListener(UpdateWaveHeight);
         }
