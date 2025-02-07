@@ -82,6 +82,9 @@ public class AudioVisualizerController : MonoBehaviour
         lineRenderer.positionCount = numSamples;
         lineRenderer.startWidth = 0.02f;
         lineRenderer.endWidth = 0.02f;
+
+        // Allow the game to keep running in the background even if it's not the active window
+        Application.runInBackground = true;
     }
 
     void Update()
