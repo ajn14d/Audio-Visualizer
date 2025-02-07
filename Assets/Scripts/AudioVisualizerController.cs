@@ -116,6 +116,8 @@ public class AudioVisualizerController : MonoBehaviour
 
         // Allow the game to keep running in the background even if it's not the active window
         Application.runInBackground = true;
+
+        audioSource.volume = 0f;
     }
 
     void Update()
