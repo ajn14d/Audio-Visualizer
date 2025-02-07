@@ -6,11 +6,13 @@ public class AudioVisualizerController : MonoBehaviour
     public AudioSource audioSource;
     public LineRenderer lineRenderer;
     public Slider waveHeightSlider; // UI Slider for adjusting waveform height
+    public Slider waveDensitySlider; // UI Slider for adjusting wave density
     public int selectedDeviceIndex = 1; // Set in Inspector
     public int sampleRate = 44100;
     public int recordingLength = 1; // seconds
     public int numSamples = 1024; // Number of samples for visualization
     public float waveformHeight = 1f; // Default scale factor for waveform visualization
+    public float waveDensity = 1f; // Default wave density (1 = normal, <1 = compressed, >1 = stretched)
     private float[] samples; // Buffer for audio samples
 
     void Start()
@@ -43,6 +45,19 @@ public class AudioVisualizerController : MonoBehaviour
         else
         {
             Debug.LogWarning("No WaveHeightSlider assigned! Waveform height cannot be adjusted.");
+        }
+
+        // Ensure WaveDensitySlider exists
+        if (waveDensitySlider != null)
+        {
+            waveDensitySlider.minValue = 0.1f; // Minimum density (compressed)
+            waveDensitySlider.maxValue = 5f;  // Maximum density (stretched)
+            waveDensitySlider.value = waveDensity; // Initialize with default value
+            waveDensitySlider.onValueChanged.AddListener(UpdateWaveDensity);
+        }
+        else
+        {
+            Debug.LogWarning("No WaveDensitySlider assigned! Wave density cannot be adjusted.");
         }
 
         // Get available microphone devices
@@ -103,7 +118,8 @@ public class AudioVisualizerController : MonoBehaviour
         // Update LineRenderer to display waveform
         for (int i = 0; i < numSamples; i++)
         {
-            float x = (float)i / numSamples * 10f - 5f; // Scale x-axis across screen
+            // Adjust x-axis to center the wave and apply density scaling
+            float x = ((float)i / numSamples) * (10f * waveDensity) - (10f * waveDensity / 2f); // Center and scale by density
             float y = samples[i] * waveformHeight; // Scale waveform height
             lineRenderer.SetPosition(i, new Vector3(x, y, 0));
         }
@@ -114,7 +130,14 @@ public class AudioVisualizerController : MonoBehaviour
     {
         waveformHeight = newHeight;
     }
+
+    // Function to update wave density when slider value changes
+    public void UpdateWaveDensity(float newDensity)
+    {
+        waveDensity = newDensity;
+    }
 }
+
 
 
 
