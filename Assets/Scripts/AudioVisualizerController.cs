@@ -7,6 +7,7 @@ public class AudioVisualizerController : MonoBehaviour
     public LineRenderer lineRenderer;
     public Slider waveHeightSlider; // UI Slider for adjusting waveform height
     public Slider waveDensitySlider; // UI Slider for adjusting wave density
+    public Slider smoothingSlider; // UI Slider for smoothing the waveform
     public int selectedDeviceIndex = 1; // Set in Inspector
     public int sampleRate = 44100;
     public int recordingLength = 1; // seconds
@@ -14,6 +15,7 @@ public class AudioVisualizerController : MonoBehaviour
     public float waveformHeight = 1f; // Default scale factor for waveform visualization
     public float waveDensity = 1f; // Default wave density (1 = normal, <1 = compressed, >1 = stretched)
     private float[] samples; // Buffer for audio samples
+    private float[] smoothedSamples; // Buffer for smoothed samples
 
     void Start()
     {
@@ -60,6 +62,19 @@ public class AudioVisualizerController : MonoBehaviour
             Debug.LogWarning("No WaveDensitySlider assigned! Wave density cannot be adjusted.");
         }
 
+        // Ensure SmoothingSlider exists
+        if (smoothingSlider != null)
+        {
+            smoothingSlider.minValue = 1f; // Minimum smoothing (no smoothing)
+            smoothingSlider.maxValue = 50f; // Maximum smoothing (more smoothing)
+            smoothingSlider.value = 1f; // Initialize with no smoothing
+            smoothingSlider.onValueChanged.AddListener(UpdateSmoothing);
+        }
+        else
+        {
+            Debug.LogWarning("No SmoothingSlider assigned! Waveform smoothing cannot be adjusted.");
+        }
+
         // Get available microphone devices
         string[] devices = Microphone.devices;
         if (devices.Length == 0)
@@ -90,8 +105,9 @@ public class AudioVisualizerController : MonoBehaviour
         audioSource.loop = true;
         audioSource.Play();
 
-        // Initialize sample buffer
+        // Initialize sample buffers
         samples = new float[numSamples];
+        smoothedSamples = new float[numSamples];
 
         // Configure LineRenderer
         lineRenderer.positionCount = numSamples;
@@ -115,12 +131,15 @@ public class AudioVisualizerController : MonoBehaviour
         int startSample = Mathf.Max(0, audioSource.timeSamples);
         audioSource.clip.GetData(samples, startSample);
 
-        // Update LineRenderer to display waveform
+        // Apply smoothing to the samples
+        ApplySmoothing();
+
+        // Update LineRenderer to display smoothed waveform
         for (int i = 0; i < numSamples; i++)
         {
             // Adjust x-axis to center the wave and apply density scaling
             float x = ((float)i / numSamples) * (10f * waveDensity) - (10f * waveDensity / 2f); // Center and scale by density
-            float y = samples[i] * waveformHeight; // Scale waveform height
+            float y = smoothedSamples[i] * waveformHeight; // Scale waveform height
             lineRenderer.SetPosition(i, new Vector3(x, y, 0));
         }
     }
@@ -136,7 +155,38 @@ public class AudioVisualizerController : MonoBehaviour
     {
         waveDensity = newDensity;
     }
+
+    // Function to update smoothing when slider value changes
+    public void UpdateSmoothing(float newSmoothing)
+    {
+        // Smoothing value is now used in the ApplySmoothing method
+    }
+
+    // Apply moving average smoothing
+    void ApplySmoothing()
+    {
+        int smoothingWindow = Mathf.RoundToInt(smoothingSlider.value); // Get the smoothing window size from slider value
+
+        for (int i = 0; i < numSamples; i++)
+        {
+            float smoothedValue = 0f;
+            int count = 0;
+
+            // Apply the moving average by averaging the surrounding points within the smoothing window
+            for (int j = i - smoothingWindow / 2; j <= i + smoothingWindow / 2; j++)
+            {
+                if (j >= 0 && j < numSamples) // Ensure within bounds
+                {
+                    smoothedValue += samples[j];
+                    count++;
+                }
+            }
+
+            smoothedSamples[i] = smoothedValue / count; // Store the average in the smoothed buffer
+        }
+    }
 }
+
 
 
 
