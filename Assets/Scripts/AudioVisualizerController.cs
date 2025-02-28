@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class AudioVisualizerController : MonoBehaviour
 {
@@ -16,6 +17,9 @@ public class AudioVisualizerController : MonoBehaviour
     public float waveDensity = 1f; // Default wave density (1 = normal, <1 = compressed, >1 = stretched)
     private float[] samples; // Buffer for audio samples
     private float[] smoothedSamples; // Buffer for smoothed samples
+    public float minimumInterval = 0.1f;
+    public float peakThreshold = 0.1f;
+    private List<float> peakAmplitudes = new List<float>(); // List to store peak amplitudes for BPM calculation
 
     void Start()
     {
@@ -144,6 +148,8 @@ public class AudioVisualizerController : MonoBehaviour
             float y = smoothedSamples[i] * waveformHeight; // Scale waveform height
             lineRenderer.SetPosition(i, new Vector3(x, y, 0));
         }
+
+        DetectPeakAmplitudes();
     }
 
     // Function to update waveform height when slider value changes
@@ -185,6 +191,54 @@ public class AudioVisualizerController : MonoBehaviour
             }
 
             smoothedSamples[i] = smoothedValue / count; // Store the average in the smoothed buffer
+        }
+    }
+
+    void DetectPeakAmplitudes()
+    {
+        peakAmplitudes.Clear();  // Clear previous peaks
+
+        // Debugging: Check if smoothedSamples is populated
+        if (smoothedSamples == null || smoothedSamples.Length == 0)
+        {
+            Debug.LogError("Smoothed samples are not initialized or empty.");
+            return;
+        }
+
+        // Iterate through the smoothed samples and detect peaks above the threshold
+        for (int i = 1; i < smoothedSamples.Length - 1; i++)
+        {
+            if (smoothedSamples[i] > smoothedSamples[i - 1] && smoothedSamples[i] > smoothedSamples[i + 1] && smoothedSamples[i] > peakThreshold)
+            {
+                // Only add a peak if it is at least 'minimumInterval' away from the last detected peak
+                if (peakAmplitudes.Count == 0 || Mathf.Abs(i - peakAmplitudes[peakAmplitudes.Count - 1]) > minimumInterval)
+                {
+                    peakAmplitudes.Add(i);
+                }
+            }
+        }
+
+        // If no peaks are detected
+        if (peakAmplitudes.Count == 0)
+        {
+            Debug.LogWarning("No peaks detected in the waveform.");
+            return;
+        }
+
+        // Calculate BPM based on the detected peaks
+        if (peakAmplitudes.Count > 1)
+        {
+            float totalInterval = 0f;
+
+            // Find the time between consecutive peaks (simplified approach)
+            for (int i = 1; i < peakAmplitudes.Count; i++)
+            {
+                totalInterval += Mathf.Abs(peakAmplitudes[i] - peakAmplitudes[i - 1]);
+            }
+
+            // Estimate BPM from the average peak interval
+            float bpm = 60f / (totalInterval / (peakAmplitudes.Count - 1));
+            Debug.Log("Estimated BPM: " + bpm);
         }
     }
 }
