@@ -173,7 +173,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -431,7 +431,7 @@ LineRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 277897840}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -1098,9 +1098,12 @@ MonoBehaviour:
   waveformHeight: 1
   waveDensity: 1
   spectrumLineRenderer: {fileID: 28550793}
-  useBarVisualization: 1
+  useBarVisualization: 0
   spectrumSamples: 64
   spectrumScale: 5
+  spectrumMinimumThreshold: 0.000001
+  spectrumExponent: 0.5
+  spectrumVerticalOffset: -3
 --- !u!1 &939850176
 GameObject:
   m_ObjectHideFlags: 0
