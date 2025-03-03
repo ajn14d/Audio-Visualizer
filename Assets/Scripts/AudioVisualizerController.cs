@@ -412,7 +412,7 @@ public class AudioVisualizerController : MonoBehaviour
     }
     
     // Method to update bar heights based on spectrum data
-   void UpdateSpectrumBars()
+    void UpdateSpectrumBars()
     {
         if (spectrumBars == null || !barsCreated)
         {
@@ -423,6 +423,10 @@ public class AudioVisualizerController : MonoBehaviour
             return;
         }
         
+        // Define logarithmic scaling parameters
+        float scaleFactor = 80f;  // Boost small values before applying log
+        float logOffset = 1f;     // Offset to ensure log(x) is meaningful
+        
         for (int i = 0; i < spectrumSamples; i++)
         {
             if (spectrumBars[i] == null) continue;
@@ -431,20 +435,40 @@ public class AudioVisualizerController : MonoBehaviour
             float value = smoothedSpectrumData[i];
             if (value < spectrumMinimumThreshold) value = 0;
             
-            // Apply logarithmic scaling, but handle zero values properly
-            float amplitude;
-            if (value > 0)
+            // Apply targeted frequency compensation
+            float frequencyCompensation = 1.0f;
+            
+            if (i < 5) // Specific targeting of first 5 bars
             {
-                // Map frequency index to a more logarithmic distribution
-                // We add 1 to value to ensure we never take log of zero
-                amplitude = Mathf.Log10(1 + value * 1.2f) * spectrumScale;
+                // Much stronger reduction for the first 5 bars
+                // The first bar gets only 15% of its value, gradually increasing
+                float t = i / 4f; // 0 for first bar, 1 for 5th bar
+                frequencyCompensation = 0.01f + (0.04f * t); // Scale from 15% to 60% of original value
+            }
+            else if (i < spectrumSamples * 0.3f) // For the rest of lower frequencies (after first 5)
+            {
+                // Normal compensation for the rest of the lower frequency range
+                float t = (i - 5) / (spectrumSamples * 0.3f - 5); // 0 at 6th bar, 1 at 30% point
+                frequencyCompensation = 0.1f + (1.6f * t); // Scale from 60% to 100% of original value
+            }
+            
+            // Apply the compensation
+            value *= frequencyCompensation;
+            
+            // Apply logarithmic scaling adjusted for small values
+            float scaledValue = value * scaleFactor;
+            float amplitude;
+            
+            if (scaledValue > 0)
+            {
+                amplitude = Mathf.Log10(logOffset + scaledValue) * spectrumScale;
             }
             else
             {
                 amplitude = 0;
             }
             
-            // Optional: still apply the exponent if needed
+            // Apply non-linear scaling (power function) if still needed
             amplitude = Mathf.Pow(amplitude, spectrumExponent);
             
             // Clamp the height to the maximum

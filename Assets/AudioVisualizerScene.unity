@@ -1103,12 +1103,12 @@ MonoBehaviour:
   spectrumSamples: 64
   spectrumScale: 200
   spectrumMinimumThreshold: 0.000001
-  spectrumExponent: 0.4
-  spectrumVerticalOffset: -3
+  spectrumExponent: 0.5
+  spectrumVerticalOffset: -4
   barPrefab: {fileID: 1912746470}
-  barWidth: 0.15
-  barSpacing: 0.05
-  maxBarHeight: 20
+  barWidth: 0.08
+  barSpacing: 0.1
+  maxBarHeight: 3.5
   barStartColor: {r: 0.14617944, g: 1, b: 0, a: 1}
   barEndColor: {r: 0.05802095, g: 1, b: 0, a: 1}
 --- !u!1 &939850176
