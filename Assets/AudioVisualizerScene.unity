@@ -1101,16 +1101,16 @@ MonoBehaviour:
   spectrumLineRenderer: {fileID: 28550793}
   useBarVisualization: 1
   spectrumSamples: 64
-  spectrumScale: 5
+  spectrumScale: 200
   spectrumMinimumThreshold: 0.000001
-  spectrumExponent: 0.5
+  spectrumExponent: 0.4
   spectrumVerticalOffset: -3
   barPrefab: {fileID: 1912746470}
   barWidth: 0.15
   barSpacing: 0.05
-  maxBarHeight: 5
-  barStartColor: {r: 0, g: 0.5, b: 1, a: 1}
-  barEndColor: {r: 0, g: 1, b: 1, a: 1}
+  maxBarHeight: 20
+  barStartColor: {r: 0.14617944, g: 1, b: 0, a: 1}
+  barEndColor: {r: 0.05802095, g: 1, b: 0, a: 1}
 --- !u!1 &939850176
 GameObject:
   m_ObjectHideFlags: 0
@@ -1817,7 +1817,7 @@ BoxCollider:
   m_GameObject: {fileID: 1912746470}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}

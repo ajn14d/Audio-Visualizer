@@ -412,7 +412,7 @@ public class AudioVisualizerController : MonoBehaviour
     }
     
     // Method to update bar heights based on spectrum data
-    void UpdateSpectrumBars()
+   void UpdateSpectrumBars()
     {
         if (spectrumBars == null || !barsCreated)
         {
@@ -431,8 +431,21 @@ public class AudioVisualizerController : MonoBehaviour
             float value = smoothedSpectrumData[i];
             if (value < spectrumMinimumThreshold) value = 0;
             
-            // Apply non-linear scaling (power function) to emphasize smaller values
-            float amplitude = Mathf.Pow(value, spectrumExponent) * spectrumScale;
+            // Apply logarithmic scaling, but handle zero values properly
+            float amplitude;
+            if (value > 0)
+            {
+                // Map frequency index to a more logarithmic distribution
+                // We add 1 to value to ensure we never take log of zero
+                amplitude = Mathf.Log10(1 + value * 1.2f) * spectrumScale;
+            }
+            else
+            {
+                amplitude = 0;
+            }
+            
+            // Optional: still apply the exponent if needed
+            amplitude = Mathf.Pow(amplitude, spectrumExponent);
             
             // Clamp the height to the maximum
             float barHeight = Mathf.Clamp(amplitude, 0.01f, maxBarHeight);
