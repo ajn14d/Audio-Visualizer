@@ -21,9 +21,9 @@ public class AudioVisualizerController : MonoBehaviour
 
     // New variables for spectrum analyzer
     public LineRenderer spectrumLineRenderer; // Assign in inspector
-    public bool useBarVisualization = false; // Set to false to use line visualization
+    public bool useBarVisualization = true; // Toggle between line and bar visualization
     public int spectrumSamples = 64; // Number of frequency bands to display
-    public float spectrumScale = 5f; // INCREASED: Much higher scale to amplify tiny values
+    public float spectrumScale = 5000f; // Higher scale to amplify tiny values
     private float[] spectrumData; // Buffer for frequency data
     private float[] smoothedSpectrumData; // Buffer for smoothed frequency data
     
@@ -36,6 +36,16 @@ public class AudioVisualizerController : MonoBehaviour
     public float spectrumMinimumThreshold = 0.00001f; // Minimum threshold to filter out noise
     public float spectrumExponent = 0.5f; // Power exponent for non-linear scaling (0.5 = square root)
     public float spectrumVerticalOffset = -3f; // Vertical position offset
+    
+    // Bar visualization variables
+    public GameObject barPrefab; // Assign a cube or other primitive in inspector
+    public float barWidth = 0.15f; // Width of each bar
+    public float barSpacing = 0.05f; // Space between bars
+    public float maxBarHeight = 5f; // Maximum height for bars
+    public Color barStartColor = new Color(0f, 0.5f, 1f); // Color at the bottom of bars
+    public Color barEndColor = new Color(0f, 1f, 1f); // Color at the top of bars
+    private GameObject[] spectrumBars; // Array to hold bar GameObjects
+    private bool barsCreated = false; // Flag to track if bars have been created
 
     void Start()
     {
@@ -151,6 +161,12 @@ public class AudioVisualizerController : MonoBehaviour
             Debug.LogWarning("No Spectrum LineRenderer assigned! Spectrum visualization will not be displayed.");
         }
 
+        // Create spectrum bars if using bar visualization
+        if (useBarVisualization && barPrefab != null)
+        {
+            CreateSpectrumBars();
+        }
+
         // Allow the game to keep running in the background even if it's not the active window
         Application.runInBackground = true;
 
@@ -192,9 +208,9 @@ public class AudioVisualizerController : MonoBehaviour
             debugTimer += Time.deltaTime;
             if (debugTimer > 1f) // Output debug info every second
             {
-                //Debug.Log("Max spectrum value: " + maxSpectrumValue);
-                //debugTimer = 0f;
-                //maxSpectrumValue = 0f;
+                Debug.Log("Max spectrum value: " + maxSpectrumValue);
+                debugTimer = 0f;
+                maxSpectrumValue = 0f;
             }
         }
     }
@@ -244,39 +260,67 @@ public class AudioVisualizerController : MonoBehaviour
     // New method for spectrum visualization
     void UpdateSpectrumVisualization()
     {
-        if (spectrumLineRenderer == null) return;
-
         // Get spectrum data
         audioSource.GetSpectrumData(spectrumData, 0, FFTWindow.BlackmanHarris);
+        
+        // Find max value for debugging
+        for (int i = 0; i < spectrumSamples; i++)
+        {
+            if (spectrumData[i] > maxSpectrumValue)
+            {
+                maxSpectrumValue = spectrumData[i];
+            }
+        }
 
         // Apply smoothing to spectrum data
         ApplySpectrumSmoothing();
 
         if (useBarVisualization)
         {
-            // Bar visualization (requires multiple line renderers or other visualization method)
-            Debug.Log("Bar visualization not implemented in this example");
+            // Make sure bars exist before trying to update them
+            if (!barsCreated && barPrefab != null)
+            {
+                CreateSpectrumBars();
+            }
+            
+            // Update bar visualization if bars exist
+            if (barsCreated)
+            {
+                UpdateSpectrumBars();
+            }
+            
+            // Hide line renderer if using bars
+            if (spectrumLineRenderer != null)
+            {
+                spectrumLineRenderer.enabled = false;
+            }
         }
         else
         {
-            // Line visualization
-            for (int i = 0; i < spectrumSamples; i++)
+            // Show line renderer if using line visualization
+            if (spectrumLineRenderer != null)
             {
-                // Position the spectrum visualization below the waveform
-                float x = ((float)i / spectrumSamples) * 10f - 5f; // Center on x-axis
+                spectrumLineRenderer.enabled = true;
                 
-                // Get the spectrum value and apply threshold to filter out noise
-                float value = smoothedSpectrumData[i];
-                if (value < spectrumMinimumThreshold) value = 0;
-                
-                // Apply non-linear scaling (power function) to emphasize smaller values
-                // Using spectrumExponent = 0.5 gives square root scaling
-                float amplitude = Mathf.Pow(value, spectrumExponent) * spectrumScale;
-                
-                // Position below waveform with offset
-                float y = amplitude + spectrumVerticalOffset;
-                
-                spectrumLineRenderer.SetPosition(i, new Vector3(x, y, 0));
+                // Line visualization
+                for (int i = 0; i < spectrumSamples; i++)
+                {
+                    // Position the spectrum visualization below the waveform
+                    float x = ((float)i / spectrumSamples) * 10f - 5f; // Center on x-axis
+                    
+                    // Get the spectrum value and apply threshold to filter out noise
+                    float value = smoothedSpectrumData[i];
+                    if (value < spectrumMinimumThreshold) value = 0;
+                    
+                    // Apply non-linear scaling (power function) to emphasize smaller values
+                    // Using spectrumExponent = 0.5 gives square root scaling
+                    float amplitude = Mathf.Pow(value, spectrumExponent) * spectrumScale;
+                    
+                    // Position below waveform with offset
+                    float y = amplitude + spectrumVerticalOffset;
+                    
+                    spectrumLineRenderer.SetPosition(i, new Vector3(x, y, 0));
+                }
             }
         }
     }
@@ -303,6 +347,186 @@ public class AudioVisualizerController : MonoBehaviour
             }
 
             smoothedSpectrumData[i] = smoothedValue / count;
+        }
+    }
+
+    // Method to create bar visualization for spectrum
+    void CreateSpectrumBars()
+    {
+        if (barPrefab == null)
+        {
+            Debug.LogError("Bar prefab is not assigned! Cannot create spectrum bars.");
+            return;
+        }
+        
+        // Create parent object for bars if it doesn't exist
+        Transform barsParent = transform.Find("SpectrumBars");
+        if (barsParent == null)
+        {
+            GameObject parentObj = new GameObject("SpectrumBars");
+            parentObj.transform.SetParent(transform);
+            parentObj.transform.localPosition = new Vector3(0, spectrumVerticalOffset, 0);
+            parentObj.transform.localRotation = Quaternion.identity;
+            barsParent = parentObj.transform;
+        }
+        
+        // Initialize array to hold bar GameObjects
+        spectrumBars = new GameObject[spectrumSamples];
+        
+        // Calculate total width of all bars and spacing
+        float totalWidth = (spectrumSamples * barWidth) + ((spectrumSamples - 1) * barSpacing);
+        float startX = -totalWidth / 2f; // Center the bars
+        
+        // Create bars
+        for (int i = 0; i < spectrumSamples; i++)
+        {
+            // Calculate position for this bar
+            float xPos = startX + (i * (barWidth + barSpacing));
+            
+            // Instantiate bar GameObject
+            GameObject bar = Instantiate(barPrefab, barsParent);
+            bar.name = "SpectrumBar_" + i;
+            
+            // Position the bar
+            bar.transform.localPosition = new Vector3(xPos, 0, 0);
+            
+            // Scale the bar (initial height is 0)
+            bar.transform.localScale = new Vector3(barWidth, 0.01f, barWidth); // Small initial height
+            
+            // Set bar color
+            Renderer renderer = bar.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                // Create a new material instance to avoid affecting the prefab
+                Material barMaterial = new Material(renderer.material);
+                barMaterial.color = barStartColor;
+                renderer.material = barMaterial;
+            }
+            
+            // Store reference to the bar
+            spectrumBars[i] = bar;
+        }
+        
+        barsCreated = true;
+        Debug.Log("Created " + spectrumSamples + " spectrum bars");
+    }
+    
+    // Method to update bar heights based on spectrum data
+    void UpdateSpectrumBars()
+    {
+        if (spectrumBars == null || !barsCreated)
+        {
+            if (barPrefab != null)
+            {
+                CreateSpectrumBars();
+            }
+            return;
+        }
+        
+        for (int i = 0; i < spectrumSamples; i++)
+        {
+            if (spectrumBars[i] == null) continue;
+            
+            // Get the spectrum value and apply threshold to filter out noise
+            float value = smoothedSpectrumData[i];
+            if (value < spectrumMinimumThreshold) value = 0;
+            
+            // Apply non-linear scaling (power function) to emphasize smaller values
+            float amplitude = Mathf.Pow(value, spectrumExponent) * spectrumScale;
+            
+            // Clamp the height to the maximum
+            float barHeight = Mathf.Clamp(amplitude, 0.01f, maxBarHeight);
+            
+            // Update bar scale
+            Vector3 scale = spectrumBars[i].transform.localScale;
+            scale.y = barHeight;
+            spectrumBars[i].transform.localScale = scale;
+            
+            // Position the bar so it grows upward from the base
+            Vector3 position = spectrumBars[i].transform.localPosition;
+            position.y = barHeight / 2f; // Center the bar vertically based on its height
+            spectrumBars[i].transform.localPosition = position;
+            
+            // Update bar color based on height (gradient from start to end color)
+            Renderer renderer = spectrumBars[i].GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                float t = barHeight / maxBarHeight; // Normalized height (0-1)
+                renderer.material.color = Color.Lerp(barStartColor, barEndColor, t);
+            }
+        }
+    }
+    
+    // Toggle between line and bar visualization
+    public void ToggleVisualizationType()
+    {
+        useBarVisualization = !useBarVisualization;
+        
+        if (useBarVisualization)
+        {
+            // When switching to bar visualization, make sure bars exist
+            if (!barsCreated && barPrefab != null)
+            {
+                CreateSpectrumBars();
+            }
+            else
+            {
+                // If bars were previously created but hidden, show them
+                if (spectrumBars != null)
+                {
+                    foreach (GameObject bar in spectrumBars)
+                    {
+                        if (bar != null)
+                        {
+                            bar.SetActive(true);
+                        }
+                    }
+                }
+            }
+            
+            // Hide line renderer
+            if (spectrumLineRenderer != null)
+            {
+                spectrumLineRenderer.enabled = false;
+            }
+        }
+        else
+        {
+            // When switching to line visualization, show line renderer and hide bars
+            if (spectrumLineRenderer != null)
+            {
+                spectrumLineRenderer.enabled = true;
+            }
+            
+            // Hide bars
+            if (spectrumBars != null)
+            {
+                foreach (GameObject bar in spectrumBars)
+                {
+                    if (bar != null)
+                    {
+                        bar.SetActive(false);
+                    }
+                }
+            }
+        }
+        
+        Debug.Log("Visualization type toggled. Using bars: " + useBarVisualization);
+    }
+
+    // Clean up when the component is destroyed
+    void OnDestroy()
+    {
+        // Clean up spectrum bars
+        if (spectrumBars != null)
+        {
+            foreach (GameObject bar in spectrumBars)
+            {
+                if (bar != null)
+                {
+                    Destroy(bar);
+                }
+            }
         }
     }
 }
