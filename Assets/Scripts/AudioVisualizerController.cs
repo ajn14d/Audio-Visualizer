@@ -47,6 +47,12 @@ public class AudioVisualizerController : MonoBehaviour
     private GameObject[] spectrumBars; // Array to hold bar GameObjects
     private bool barsCreated = false; // Flag to track if bars have been created
 
+    // Bar smoothing variables
+    public int barSmoothingSamples = 2; // Number of bars to average together
+    private Queue<float[]> barHistoryBuffer; // Buffer to store previous bar heights
+    public float barTransitionSpeed = 5f; // Speed at which bars transition to new heights
+    private float[] targetBarHeights; // Target heights for smooth transitions
+
     void Start()
     {
         // Existing initialization code
@@ -160,6 +166,10 @@ public class AudioVisualizerController : MonoBehaviour
         {
             Debug.LogWarning("No Spectrum LineRenderer assigned! Spectrum visualization will not be displayed.");
         }
+
+        // Initialize bar history buffer and target heights
+        barHistoryBuffer = new Queue<float[]>();
+        targetBarHeights = new float[spectrumSamples];
 
         // Create spectrum bars if using bar visualization
         if (useBarVisualization && barPrefab != null)
@@ -350,6 +360,47 @@ public class AudioVisualizerController : MonoBehaviour
         }
     }
 
+    // Smooth the bar heights by averaging multiple samples
+    float[] SmoothBarHeights(float[] currentHeights)
+    {
+        if (barHistoryBuffer == null)
+        {
+            barHistoryBuffer = new Queue<float[]>();
+            targetBarHeights = new float[spectrumSamples];
+        }
+
+        // Add current heights to history
+        barHistoryBuffer.Enqueue((float[])currentHeights.Clone());
+
+        // Keep only the specified number of samples
+        while (barHistoryBuffer.Count > barSmoothingSamples)
+        {
+            barHistoryBuffer.Dequeue();
+        }
+
+        // Average all samples
+        float[] smoothedHeights = new float[spectrumSamples];
+        foreach (float[] heights in barHistoryBuffer)
+        {
+            for (int i = 0; i < spectrumSamples; i++)
+            {
+                smoothedHeights[i] += heights[i];
+            }
+        }
+
+        // Calculate average
+        for (int i = 0; i < spectrumSamples; i++)
+        {
+            smoothedHeights[i] /= barHistoryBuffer.Count;
+            
+            // Smooth transition to target height
+            targetBarHeights[i] = Mathf.Lerp(targetBarHeights[i], smoothedHeights[i], Time.deltaTime * barTransitionSpeed);
+            smoothedHeights[i] = targetBarHeights[i];
+        }
+
+        return smoothedHeights;
+    }
+
     // Method to create bar visualization for spectrum
     void CreateSpectrumBars()
     {
@@ -397,8 +448,8 @@ public class AudioVisualizerController : MonoBehaviour
             Renderer renderer = bar.GetComponent<Renderer>();
             if (renderer != null)
             {
-                // Create a new material instance to avoid affecting the prefab
-                Material barMaterial = new Material(renderer.material);
+                // Use an Unlit shader to prevent lighting from affecting the color
+                Material barMaterial = new Material(Shader.Find("Unlit/Color"));
                 barMaterial.color = barStartColor;
                 renderer.material = barMaterial;
             }
@@ -422,15 +473,17 @@ public class AudioVisualizerController : MonoBehaviour
             }
             return;
         }
-        
+
         // Define logarithmic scaling parameters
-        float scaleFactor = 80f;  // Boost small values before applying log
-        float logOffset = 1f;     // Offset to ensure log(x) is meaningful
+        float scaleFactor = 50f;  // Boost small values before applying log
+        float logOffset = 1.05f;     // Offset to ensure log(x) is meaningful
         
+        // Create array to hold current bar heights
+        float[] currentHeights = new float[spectrumSamples];
+        
+        // Calculate initial heights
         for (int i = 0; i < spectrumSamples; i++)
         {
-            if (spectrumBars[i] == null) continue;
-            
             // Get the spectrum value and apply threshold to filter out noise
             float value = smoothedSpectrumData[i];
             if (value < spectrumMinimumThreshold) value = 0;
@@ -440,19 +493,15 @@ public class AudioVisualizerController : MonoBehaviour
             
             if (i < 5) // Specific targeting of first 5 bars
             {
-                // Much stronger reduction for the first 5 bars
-                // The first bar gets only 15% of its value, gradually increasing
-                float t = i / 4f; // 0 for first bar, 1 for 5th bar
-                frequencyCompensation = 0.01f + (0.04f * t); // Scale from 15% to 60% of original value
+                float t = i / 4f;
+                frequencyCompensation = 0.01f + (0.1f * t);
             }
-            else if (i < spectrumSamples * 0.3f) // For the rest of lower frequencies (after first 5)
+            else if (i < spectrumSamples * 0.3f)
             {
-                // Normal compensation for the rest of the lower frequency range
-                float t = (i - 5) / (spectrumSamples * 0.3f - 5); // 0 at 6th bar, 1 at 30% point
-                frequencyCompensation = 0.1f + (1.6f * t); // Scale from 60% to 100% of original value
+                float t = (i - 5) / (spectrumSamples * 0.3f - 5);
+                frequencyCompensation = 0.18f + (0.6f * t);
             }
             
-            // Apply the compensation
             value *= frequencyCompensation;
             
             // Apply logarithmic scaling adjusted for small values
@@ -461,18 +510,26 @@ public class AudioVisualizerController : MonoBehaviour
             
             if (scaledValue > 0)
             {
-                amplitude = Mathf.Log10(logOffset + scaledValue) * spectrumScale;
+                amplitude = Mathf.Log10(1 + scaledValue * 0.5f) * spectrumScale;
             }
             else
             {
                 amplitude = 0;
             }
             
-            // Apply non-linear scaling (power function) if still needed
             amplitude = Mathf.Pow(amplitude, spectrumExponent);
+            currentHeights[i] = Mathf.Clamp(amplitude, 0.01f, maxBarHeight);
+        }
+        
+        // Apply smoothing across multiple frames
+        float[] smoothedHeights = SmoothBarHeights(currentHeights);
+        
+        // Update bar visuals with smoothed heights
+        for (int i = 0; i < spectrumSamples; i++)
+        {
+            if (spectrumBars[i] == null) continue;
             
-            // Clamp the height to the maximum
-            float barHeight = Mathf.Clamp(amplitude, 0.01f, maxBarHeight);
+            float barHeight = smoothedHeights[i];
             
             // Update bar scale
             Vector3 scale = spectrumBars[i].transform.localScale;
@@ -481,14 +538,14 @@ public class AudioVisualizerController : MonoBehaviour
             
             // Position the bar so it grows upward from the base
             Vector3 position = spectrumBars[i].transform.localPosition;
-            position.y = barHeight / 2f; // Center the bar vertically based on its height
+            position.y = barHeight / 2f;
             spectrumBars[i].transform.localPosition = position;
             
-            // Update bar color based on height (gradient from start to end color)
+            // Update bar color based on height
             Renderer renderer = spectrumBars[i].GetComponent<Renderer>();
             if (renderer != null)
             {
-                float t = barHeight / maxBarHeight; // Normalized height (0-1)
+                float t = barHeight / maxBarHeight;
                 renderer.material.color = Color.Lerp(barStartColor, barEndColor, t);
             }
         }
