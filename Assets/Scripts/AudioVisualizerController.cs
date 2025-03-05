@@ -608,6 +608,41 @@ public class AudioVisualizerController : MonoBehaviour
         Debug.Log("Visualization type toggled. Using bars: " + useBarVisualization);
     }
 
+    public void ToggleDisplay()
+    {
+        // Toggle visibility between spectrum bars and waveform display
+
+        // Check if spectrum bars are currently active
+        bool spectrumBarsActive = spectrumBars != null && spectrumBars[0].activeSelf; // Assuming spectrumBars is an array and bars[0] can be used to check visibility
+
+        // If spectrum bars are currently active, hide them and show the waveform
+        if (spectrumBarsActive)
+        {
+            foreach (GameObject bar in spectrumBars)
+            {
+                bar.SetActive(false);
+            }
+
+            if (lineRenderer != null)
+            {
+                lineRenderer.enabled = true; // Enable waveform display (LineRenderer)
+            }
+        }
+        // If waveform display is active, hide it and show the spectrum bars
+        else
+        {
+            if (lineRenderer != null)
+            {
+                lineRenderer.enabled = false; // Disable waveform display (LineRenderer)
+            }
+
+            foreach (GameObject bar in spectrumBars)
+            {
+                bar.SetActive(true); // Enable spectrum bars
+            }
+        }
+    }
+
     // Clean up when the component is destroyed
     void OnDestroy()
     {
