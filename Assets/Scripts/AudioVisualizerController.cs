@@ -5,7 +5,6 @@ using System.Collections;
 
 public class AudioVisualizerController : MonoBehaviour
 {
-    // Existing variables from your script
     public Text startUpText;
     public AudioSource audioSource;
     public LineRenderer lineRenderer;
@@ -24,7 +23,7 @@ public class AudioVisualizerController : MonoBehaviour
     private float[] samples;
     private float[] smoothedSamples;
 
-    // New variables for spectrum analyzer
+    // variables for spectrum analyzer
     public LineRenderer spectrumLineRenderer; // Assign in inspector
     public bool useBarVisualization = true; // Toggle between line and bar visualization
     public int spectrumSamples = 64; // Number of frequency bands to display
@@ -37,7 +36,7 @@ public class AudioVisualizerController : MonoBehaviour
     private bool debugOutput = true;
     private float debugTimer = 0f;
     
-    // New variables for spectrum visualization enhancement
+    // variables for spectrum visualization enhancement
     public float spectrumMinimumThreshold = 0.00001f; // Minimum threshold to filter out noise
     public float spectrumExponent = 0.5f; // Power exponent for non-linear scaling (0.5 = square root)
     public float spectrumVerticalOffset = -3f; // Vertical position offset
@@ -265,19 +264,19 @@ public class AudioVisualizerController : MonoBehaviour
         }
     }
 
-    // Function to update waveform height when slider value changes
+    // Update waveform height when slider value changes
     public void UpdateWaveHeight(float newHeight)
     {
         waveformHeight = newHeight;
     }
 
-    // Function to update wave density when slider value changes
+    // Update wave density when slider value changes
     public void UpdateWaveDensity(float newDensity)
     {
         waveDensity = newDensity;
     }
 
-    // Function to update smoothing when slider value changes
+    // Update smoothing when slider value changes
     public void UpdateSmoothing(float newSmoothing)
     {
         // Smoothing value is now used in the ApplySmoothing method
@@ -307,7 +306,7 @@ public class AudioVisualizerController : MonoBehaviour
         }
     }
 
-    // New method for spectrum visualization
+    // Function for spectrum visualization
     void UpdateSpectrumVisualization()
     {
         // Get spectrum data
@@ -441,7 +440,7 @@ public class AudioVisualizerController : MonoBehaviour
         return smoothedHeights;
     }
 
-    // Method to create bar visualization for spectrum
+    // Fuction to create bar visualization for spectrum
     void CreateSpectrumBars()
     {
         if (barPrefab == null)
@@ -509,7 +508,7 @@ public class AudioVisualizerController : MonoBehaviour
         Debug.Log("Created " + spectrumSamples + " spectrum bars");
     }
     
-    // Method to update bar heights based on spectrum data
+    // Function to update bar heights based on spectrum data
     void UpdateSpectrumBars()
     {
         if (spectrumBars == null || !barsCreated)
@@ -804,7 +803,6 @@ public class AudioVisualizerController : MonoBehaviour
         StartCoroutine(DisableTextAfterDelayCoroutine());
     }
 
-    // Corrected: Use non-generic IEnumerator for the coroutine
     IEnumerator DisableTextAfterDelayCoroutine()
     {
         // Wait for 10 seconds
