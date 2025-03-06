@@ -514,16 +514,59 @@ public class AudioVisualizerController : MonoBehaviour
             // Apply targeted frequency compensation
             float frequencyCompensation = 1.0f;
 
-            if (i < 5) // Specific targeting of first 5 bars
+            if (i == 0) // Target the first bar (bar 0)
             {
-                float t = i / 4f;
-                frequencyCompensation = 0.01f + (0.03f * t);
+                frequencyCompensation = 0.01f;
             }
-            else if (i < spectrumSamples * 0.3f)
+            else if (i == 1) // Target the second bar (bar 1)
             {
-                float t = (i - 5) / (spectrumSamples * 0.3f - 5);
-                frequencyCompensation = 0.1f + (0.8f * t);
+                frequencyCompensation = 0.02f;
             }
+            else if (i == 2) // Target the third bar (bar 2)
+            {
+                frequencyCompensation = 0.03f;
+            }
+            else if (i == 3) // Target the fourth bar (bar 3)
+            {
+                frequencyCompensation = 0.05f;
+            }
+            else if (i == 4) // Target the fifth bar (bar 4)
+            {
+                frequencyCompensation = 0.1f;
+            }
+            else if (i == 5) // Target the fifth bar (bar 4)
+            {
+                frequencyCompensation = 0.2f;
+            }
+             else if (i == 6) // Target the fifth bar (bar 4)
+            {
+                frequencyCompensation = 0.3f;
+            }
+            else if (i == 7) // Target the fifth bar (bar 4)
+            {
+                frequencyCompensation = 0.35f;
+            }
+             else if (i == 8) // Target the fifth bar (bar 4)
+            {
+                frequencyCompensation = 0.45f;
+            }
+             else if (i == 9) // Target the fifth bar (bar 4)
+            {
+                frequencyCompensation = 0.55f;
+            }
+            else if (i == 10) // Target the fifth bar (bar 4)
+            {
+                frequencyCompensation = 0.7f;
+            }
+            else if (i == 11) // Target the fifth bar (bar 4)
+            {
+                frequencyCompensation = 0.8f;
+            }
+            // else if (i >= 6 && i < 16) // Specific targeting of bars between 5 and 15
+            // {
+              //  float t = i / 4f;
+              //  frequencyCompensation = 0.005f + (0.25f * t);
+            // }
 
             value *= frequencyCompensation;
 
