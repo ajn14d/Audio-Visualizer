@@ -11,6 +11,7 @@ public class AudioVisualizerController : MonoBehaviour
     public Slider waveDensitySlider;
     public Slider smoothingSlider;
     public Slider spectrumScaleSlider;
+    public Slider spectrumExponentSlider;
     public int selectedDeviceIndex = 1;
     public int sampleRate = 44100;
     public int recordingLength = 1;
@@ -122,6 +123,19 @@ public class AudioVisualizerController : MonoBehaviour
         {
             Debug.LogWarning("No SpectrumScaleSlider assigned! Spectrum scale cannot be adjusted.");
         }
+
+        if (spectrumExponentSlider != null)
+        {
+            spectrumExponentSlider.minValue = 0.1f;
+            spectrumExponentSlider.maxValue = 1.0f;
+            spectrumExponentSlider.value = spectrumExponent;
+            spectrumExponentSlider.onValueChanged.AddListener((value) => spectrumExponent = value);
+        }
+        else
+        {
+            Debug.LogWarning("No SpectrumExponentSlider assigned! Spectrum exponent cannot be adjusted.");
+        }
+
         // Get available microphone devices
         string[] devices = Microphone.devices;
         if (devices.Length == 0)
@@ -696,10 +710,15 @@ public class AudioVisualizerController : MonoBehaviour
             {
                 lineRenderer.enabled = true; // Enable waveform display (LineRenderer)
             }
-            // Hide SpectrumScaleSlider and show WaveHeightSlider and WaveDensitySlider
+            // Hide SpectrumScaleSlider/spectrumExponentSlider and show WaveHeightSlider/WaveDensitySlider
             if (spectrumScaleSlider != null)
             {
                 spectrumScaleSlider.gameObject.SetActive(false); // Hide SpectrumScaleSlider
+            }
+
+            if (spectrumExponentSlider != null)
+            {
+                spectrumExponentSlider.gameObject.SetActive(false); // Hide SpectrumExponentSlider
             }
 
             if (waveHeightSlider != null)
@@ -724,10 +743,15 @@ public class AudioVisualizerController : MonoBehaviour
             {
                 bar.SetActive(true); // Enable spectrum bars
             }
-            // Show SpectrumScaleSlider and hide WaveHeightSlider and WaveDensitySlider
+            // Show SpectrumScaleSlider/spectrumExponentSlider and hide WaveHeightSlider/WaveDensitySlider
             if (spectrumScaleSlider != null)
             {
                 spectrumScaleSlider.gameObject.SetActive(true); // Show SpectrumScaleSlider
+            }
+
+            if (spectrumExponentSlider != null)
+            {
+                spectrumExponentSlider.gameObject.SetActive(true); // Show SpectrumExponentSlider
             }
 
             if (waveHeightSlider != null)
