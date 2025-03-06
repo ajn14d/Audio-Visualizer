@@ -10,6 +10,7 @@ public class AudioVisualizerController : MonoBehaviour
     public Slider waveHeightSlider;
     public Slider waveDensitySlider;
     public Slider smoothingSlider;
+    public Slider spectrumScaleSlider;
     public int selectedDeviceIndex = 1;
     public int sampleRate = 44100;
     public int recordingLength = 1;
@@ -110,6 +111,17 @@ public class AudioVisualizerController : MonoBehaviour
             Debug.LogWarning("No SmoothingSlider assigned! Waveform smoothing cannot be adjusted.");
         }
 
+        if (spectrumScaleSlider != null)
+        {
+            spectrumScaleSlider.minValue = 100f;
+            spectrumScaleSlider.maxValue = 2000f;
+            spectrumScaleSlider.value = spectrumScale;
+            spectrumScaleSlider.onValueChanged.AddListener((value) => spectrumScale = value);
+        }
+        else
+        {
+            Debug.LogWarning("No SpectrumScaleSlider assigned! Spectrum scale cannot be adjusted.");
+        }
         // Get available microphone devices
         string[] devices = Microphone.devices;
         if (devices.Length == 0)
@@ -629,7 +641,7 @@ public class AudioVisualizerController : MonoBehaviour
         // Check if spectrum bars are currently active
         bool spectrumBarsActive = spectrumBars != null && spectrumBars[0].activeSelf; // Assuming spectrumBars is an array and bars[0] can be used to check visibility
 
-        // If spectrum bars are currently active, hide them and show the waveform
+        // Switch to Spectrum and sliders
         if (spectrumBarsActive)
         {
             foreach (GameObject bar in spectrumBars)
@@ -640,6 +652,21 @@ public class AudioVisualizerController : MonoBehaviour
             if (lineRenderer != null)
             {
                 lineRenderer.enabled = true; // Enable waveform display (LineRenderer)
+            }
+            // Hide SpectrumScaleSlider and show WaveHeightSlider and WaveDensitySlider
+            if (spectrumScaleSlider != null)
+            {
+                spectrumScaleSlider.gameObject.SetActive(false); // Hide SpectrumScaleSlider
+            }
+
+            if (waveHeightSlider != null)
+            {
+                waveHeightSlider.gameObject.SetActive(true); // Show WaveHeightSlider
+            }
+
+            if (waveDensitySlider != null)
+            {
+                waveDensitySlider.gameObject.SetActive(true); // Show WaveDensitySlider
             }
         }
         // If waveform display is active, hide it and show the spectrum bars
@@ -653,6 +680,21 @@ public class AudioVisualizerController : MonoBehaviour
             foreach (GameObject bar in spectrumBars)
             {
                 bar.SetActive(true); // Enable spectrum bars
+            }
+            // Show SpectrumScaleSlider and hide WaveHeightSlider and WaveDensitySlider
+            if (spectrumScaleSlider != null)
+            {
+                spectrumScaleSlider.gameObject.SetActive(true); // Show SpectrumScaleSlider
+            }
+
+            if (waveHeightSlider != null)
+            {
+                waveHeightSlider.gameObject.SetActive(false); // Hide WaveHeightSlider
+            }
+
+            if (waveDensitySlider != null)
+            {
+                waveDensitySlider.gameObject.SetActive(false); // Hide WaveDensitySlider
             }
         }
     }
