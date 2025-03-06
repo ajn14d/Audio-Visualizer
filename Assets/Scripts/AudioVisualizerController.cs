@@ -1,10 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Collections;
 
 public class AudioVisualizerController : MonoBehaviour
 {
     // Existing variables from your script
+    public Text startUpText;
     public AudioSource audioSource;
     public LineRenderer lineRenderer;
     public Slider waveHeightSlider;
@@ -12,6 +14,7 @@ public class AudioVisualizerController : MonoBehaviour
     public Slider smoothingSlider;
     public Slider spectrumScaleSlider;
     public Slider spectrumExponentSlider;
+    public Dropdown deviceDropdown; 
     public int selectedDeviceIndex = 1;
     public int sampleRate = 44100;
     public int recordingLength = 1;
@@ -60,7 +63,10 @@ public class AudioVisualizerController : MonoBehaviour
 
     void Start()
     {
-        // Existing initialization code
+        // Initialization code
+
+        StartUpText(); // Start the coroutine to disable startUpText after 10 seconds
+
         if (audioSource == null)
         {
             audioSource = GetComponent<AudioSource>();
@@ -136,7 +142,7 @@ public class AudioVisualizerController : MonoBehaviour
             Debug.LogWarning("No SpectrumExponentSlider assigned! Spectrum exponent cannot be adjusted.");
         }
 
-        // Get available microphone devices
+         // Get available microphone devices
         string[] devices = Microphone.devices;
         if (devices.Length == 0)
         {
@@ -144,21 +150,25 @@ public class AudioVisualizerController : MonoBehaviour
             return;
         }
 
-        Debug.Log("Available Microphone Devices:");
+        // Populate the dropdown with available devices
+        List<string> deviceNames = new List<string>();
         for (int i = 0; i < devices.Length; i++)
         {
-            Debug.Log(i + ": " + devices[i]);
+            deviceNames.Add(devices[i]);  // Add device names to the list
         }
 
-        // Validate selected device index
-        if (selectedDeviceIndex < 0 || selectedDeviceIndex >= devices.Length)
-        {
-            Debug.LogWarning("Selected device index is out of range. Defaulting to device 0.");
-            selectedDeviceIndex = 0;
-        }
+        // Clear existing options and add the new ones
+        deviceDropdown.ClearOptions();
+        deviceDropdown.AddOptions(deviceNames);
 
+        // Set the default selected index (usually 0 or the first device)
+        deviceDropdown.value = selectedDeviceIndex;
+
+        // Add listener to update selectedDeviceIndex when the user changes the selection
+        deviceDropdown.onValueChanged.AddListener(OnDeviceSelectionChanged);
+
+        // Start recording from the default device (or previously selected device)
         string selectedDevice = devices[selectedDeviceIndex];
-        Debug.Log("Using microphone device: " + selectedDevice);
 
         // Start recording
         audioSource.clip = Microphone.Start(selectedDevice, true, recordingLength, sampleRate);
@@ -763,6 +773,48 @@ public class AudioVisualizerController : MonoBehaviour
             {
                 waveDensitySlider.gameObject.SetActive(false); // Hide WaveDensitySlider
             }
+        }
+    }
+
+    void OnDeviceSelectionChanged(int index)
+    {
+        // Update the selected device index
+        selectedDeviceIndex = index;
+
+        // Get the name of the selected device
+        string selectedDevice = Microphone.devices[selectedDeviceIndex];
+        Debug.Log("Selected microphone: " + selectedDevice);
+
+        // Stop any ongoing recording with the previous device
+        if (Microphone.IsRecording(null))
+        {
+            Microphone.End(Microphone.devices[selectedDeviceIndex - 1]); // Stop the previous device if recording
+        }
+
+        // Start recording with the newly selected device
+        audioSource.clip = Microphone.Start(selectedDevice, true, recordingLength, sampleRate);
+        while (Microphone.GetPosition(selectedDevice) <= 0) { } // Wait for recording to start
+        audioSource.loop = true;
+        audioSource.Play();
+    }
+
+    void StartUpText()
+    {
+        // Start the coroutine to disable startUpText after 10 seconds
+        StartCoroutine(DisableTextAfterDelayCoroutine());
+    }
+
+    // Corrected: Use non-generic IEnumerator for the coroutine
+    IEnumerator DisableTextAfterDelayCoroutine()
+    {
+        // Wait for 10 seconds
+        yield return new WaitForSeconds(10f);
+
+        // Disable the startUpText after the wait
+        if (startUpText != null)
+        {
+            startUpText.gameObject.SetActive(false);
+            Debug.Log("startUpText has been disabled after 10 seconds.");
         }
     }
 
