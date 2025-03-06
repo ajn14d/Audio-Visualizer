@@ -1314,9 +1314,9 @@ MonoBehaviour:
   spectrumLineRenderer: {fileID: 28550793}
   useBarVisualization: 1
   spectrumSamples: 64
-  spectrumScale: 100
+  spectrumScale: 500
   spectrumMinimumThreshold: 0.000001
-  spectrumExponent: 0.8
+  spectrumExponent: 0.9
   spectrumVerticalOffset: -1
   barPrefab: {fileID: 1912746470}
   barWidth: 0.08

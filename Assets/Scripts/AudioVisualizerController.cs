@@ -53,6 +53,9 @@ public class AudioVisualizerController : MonoBehaviour
     public float barTransitionSpeed = 5f; // Speed at which bars transition to new heights
     private float[] targetBarHeights; // Target heights for smooth transitions
 
+    // bar material
+    public Material spectrumBarMaterial;
+
     void Start()
     {
         // Existing initialization code
@@ -182,6 +185,7 @@ public class AudioVisualizerController : MonoBehaviour
 
         // Set audio source volume to 0 to prevent feedback
         audioSource.volume = 1f;
+
     }
 
     void Update()
@@ -444,14 +448,21 @@ public class AudioVisualizerController : MonoBehaviour
             // Scale the bar (initial height is 0)
             bar.transform.localScale = new Vector3(barWidth, 0.01f, barWidth); // Small initial height
             
-            // Set bar color
+            // Set bar color & ensure shader is included in build
             Renderer renderer = bar.GetComponent<Renderer>();
             if (renderer != null)
             {
-                // Use an Unlit shader to prevent lighting from affecting the color
-                Material barMaterial = new Material(Shader.Find("Unlit/Color"));
-                barMaterial.color = barStartColor;
-                renderer.material = barMaterial;
+                if (spectrumBarMaterial != null)
+                {
+                    renderer.material = new Material(spectrumBarMaterial);  // Use preloaded material
+                }
+                else
+                {
+                    Debug.LogError("Spectrum Bar Material is not assigned! Assign it in the Inspector.");
+                }
+
+                // Set the color dynamically if needed
+                renderer.material.color = barStartColor;
             }
             
             // Store reference to the bar
@@ -477,37 +488,37 @@ public class AudioVisualizerController : MonoBehaviour
         // Define logarithmic scaling parameters
         float scaleFactor = 50f;  // Boost small values before applying log
         float logOffset = 1.05f;     // Offset to ensure log(x) is meaningful
-        
+
         // Create array to hold current bar heights
         float[] currentHeights = new float[spectrumSamples];
-        
+
         // Calculate initial heights
         for (int i = 0; i < spectrumSamples; i++)
         {
             // Get the spectrum value and apply threshold to filter out noise
             float value = smoothedSpectrumData[i];
             if (value < spectrumMinimumThreshold) value = 0;
-            
+
             // Apply targeted frequency compensation
             float frequencyCompensation = 1.0f;
-            
+
             if (i < 5) // Specific targeting of first 5 bars
             {
                 float t = i / 4f;
-                frequencyCompensation = 0.01f + (0.1f * t);
+                frequencyCompensation = 0.01f + (0.03f * t);
             }
             else if (i < spectrumSamples * 0.3f)
             {
                 float t = (i - 5) / (spectrumSamples * 0.3f - 5);
-                frequencyCompensation = 0.18f + (0.6f * t);
+                frequencyCompensation = 0.1f + (0.8f * t);
             }
-            
+
             value *= frequencyCompensation;
-            
+
             // Apply logarithmic scaling adjusted for small values
             float scaledValue = value * scaleFactor;
             float amplitude;
-            
+
             if (scaledValue > 0)
             {
                 amplitude = Mathf.Log10(1 + scaledValue * 0.5f) * spectrumScale;
@@ -516,37 +527,40 @@ public class AudioVisualizerController : MonoBehaviour
             {
                 amplitude = 0;
             }
-            
+
             amplitude = Mathf.Pow(amplitude, spectrumExponent);
             currentHeights[i] = Mathf.Clamp(amplitude, 0.01f, maxBarHeight);
         }
-        
+
         // Apply smoothing across multiple frames
         float[] smoothedHeights = SmoothBarHeights(currentHeights);
-        
+
         // Update bar visuals with smoothed heights
         for (int i = 0; i < spectrumSamples; i++)
         {
             if (spectrumBars[i] == null) continue;
-            
+
             float barHeight = smoothedHeights[i];
-            
+
             // Update bar scale
             Vector3 scale = spectrumBars[i].transform.localScale;
             scale.y = barHeight;
             spectrumBars[i].transform.localScale = scale;
-            
+
             // Position the bar so it grows upward from the base
             Vector3 position = spectrumBars[i].transform.localPosition;
             position.y = barHeight / 2f;
             spectrumBars[i].transform.localPosition = position;
-            
-            // Update bar color based on height
+
+            // Apply rainbow color effect based on the index of the bar
+            float hue = (float)i / spectrumSamples; // Spread across the hue spectrum (0 to 1)
+            Color barColor = Color.HSVToRGB(hue, 1f, 1f); // Full saturation, full value
+
+            // Update bar color
             Renderer renderer = spectrumBars[i].GetComponent<Renderer>();
             if (renderer != null)
             {
-                float t = barHeight / maxBarHeight;
-                renderer.material.color = Color.Lerp(barStartColor, barEndColor, t);
+                renderer.material.color = barColor;
             }
         }
     }
