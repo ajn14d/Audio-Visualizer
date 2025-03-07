@@ -3590,8 +3590,9 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: "<- Select a device for visualizer to react to                             
     Switch Visualization type ->\n\n\t\t\t\n\t\t\t\tUse a virtual audio cable or
-    Stereo Mix to have visualizer react to system audio\n\t\t\t\t\t\t\t\t\t\t\t(text
-    will disappear in 10 seconds)"
+    Stereo Mix to have visualizer react to system audio\n\t\t\t\t\t\t\t\t\t\t\t 
+    Mute program in Volume Mixer\n\t\t\t\t\t\t\t\t\t\t\t(text will disappear in 10
+    seconds)"
 --- !u!222 &1878254607
 CanvasRenderer:
   m_ObjectHideFlags: 0

@@ -502,6 +502,12 @@ public class AudioVisualizerController : MonoBehaviour
             
             // Store reference to the bar
             spectrumBars[i] = bar;
+
+            // Disable the first three bars and the last bar
+            if (i == 0 || i == 1 || i == 2 || i == spectrumSamples - 1)
+            {
+                bar.SetActive(false);
+            }
         }
         
         barsCreated = true;
@@ -509,139 +515,155 @@ public class AudioVisualizerController : MonoBehaviour
     }
     
     // Function to update bar heights based on spectrum data
-    void UpdateSpectrumBars()
+void UpdateSpectrumBars()
+{
+    if (spectrumBars == null || !barsCreated)
     {
-        if (spectrumBars == null || !barsCreated)
+        if (barPrefab != null)
         {
-            if (barPrefab != null)
-            {
-                CreateSpectrumBars();
-            }
-            return;
+            CreateSpectrumBars();
+        }
+        return;
+    }
+
+    // Define logarithmic scaling parameters
+    float scaleFactor = 50f;
+    float logOffset = 1.05f;
+
+    // Create array to hold current bar heights
+    float[] currentHeights = new float[spectrumSamples];
+
+    // Calculate initial heights
+    for (int i = 0; i < spectrumSamples; i++)
+    {
+        // Get the spectrum value and apply threshold to filter out noise
+        float value = smoothedSpectrumData[i];
+        if (value < spectrumMinimumThreshold) value = 0;
+
+        // Calculate frequency compensation based on bar index
+        float frequencyCompensation;
+        float normalizedIndex = i / (float)spectrumSamples;
+
+        /*
+        if (i == 0) // Target the first bar (bar 0)
+        {
+            frequencyCompensation = 0.001f;
+        }
+        else if (i == 1) // Target the second bar (bar 1)
+        {
+            frequencyCompensation = 0.002f;
+        }
+        else if (i == 2) // Target the third bar (bar 2)
+        {
+            frequencyCompensation = 0.004f;
+        }
+        else if (i == 3) // Target the fourth bar (bar 3)
+        {
+            frequencyCompensation = 0.015f;
+        } 
+        else if (i == 4) // Target the fifth bar (bar 4)
+        {
+            frequencyCompensation = 0.02f;
+        }
+        else if (i == 5) // Target the fifth bar (bar 4)
+        {
+            frequencyCompensation = 0.02f;
+        }
+        else if (i == 6) // Target the fifth bar (bar 4)
+        {
+            frequencyCompensation = 0.3f;
+        }
+        else if (i == 7) // Target the fifth bar (bar 4)
+        {
+            frequencyCompensation = 0.35f;
+        }
+         else if (i == 8) // Target the fifth bar (bar 4)
+        {
+            frequencyCompensation = 0.45f;
+        }
+        else if (i == 9) // Target the fifth bar (bar 4)
+        {
+            frequencyCompensation = 0.55f;
+         }
+        else if (i == 10) // Target the fifth bar (bar 4)
+        {
+            frequencyCompensation = 0.7f;
+        }
+        else if (i == 11) // Target the fifth bar (bar 4)
+        {
+            frequencyCompensation = 0.8f;
+        } */
+        if (i < 16) // First quarter (0-15) - very low frequencies
+        {
+            frequencyCompensation = Mathf.Lerp(0.01f, 0.1f, i / 16f);
+        }
+        else if (i < 32) // Second quarter (16-31) - low-mid frequencies
+        {
+            frequencyCompensation = Mathf.Lerp(0.1f, 0.3f, (i - 16) / 16f);
+        }
+        else if (i < 48) // Third quarter (32-47) - mid-high frequencies
+        {
+            frequencyCompensation = Mathf.Lerp(0.3f, 0.6f, (i - 32) / 16f);
+        }
+        else // Fourth quarter (48-63) - high frequencies
+        {
+            frequencyCompensation = Mathf.Lerp(0.6f, 1.0f, (i - 48) / 16f);
         }
 
-        // Define logarithmic scaling parameters
-        float scaleFactor = 50f;  // Boost small values before applying log
-        float logOffset = 1.05f;     // Offset to ensure log(x) is meaningful
+        value *= frequencyCompensation;
 
-        // Create array to hold current bar heights
-        float[] currentHeights = new float[spectrumSamples];
+        // Apply logarithmic scaling adjusted for small values
+        float scaledValue = value * scaleFactor;
+        float amplitude;
 
-        // Calculate initial heights
-        for (int i = 0; i < spectrumSamples; i++)
+        if (scaledValue > 0)
         {
-            // Get the spectrum value and apply threshold to filter out noise
-            float value = smoothedSpectrumData[i];
-            if (value < spectrumMinimumThreshold) value = 0;
-
-            // Apply targeted frequency compensation
-            float frequencyCompensation = 1.0f;
-
-            if (i == 0) // Target the first bar (bar 0)
-            {
-                frequencyCompensation = 0.01f;
-            }
-            else if (i == 1) // Target the second bar (bar 1)
-            {
-                frequencyCompensation = 0.02f;
-            }
-            else if (i == 2) // Target the third bar (bar 2)
-            {
-                frequencyCompensation = 0.03f;
-            }
-            else if (i == 3) // Target the fourth bar (bar 3)
-            {
-                frequencyCompensation = 0.05f;
-            }
-            else if (i == 4) // Target the fifth bar (bar 4)
-            {
-                frequencyCompensation = 0.1f;
-            }
-            else if (i == 5) // Target the fifth bar (bar 4)
-            {
-                frequencyCompensation = 0.2f;
-            }
-             else if (i == 6) // Target the fifth bar (bar 4)
-            {
-                frequencyCompensation = 0.3f;
-            }
-            else if (i == 7) // Target the fifth bar (bar 4)
-            {
-                frequencyCompensation = 0.35f;
-            }
-             else if (i == 8) // Target the fifth bar (bar 4)
-            {
-                frequencyCompensation = 0.45f;
-            }
-             else if (i == 9) // Target the fifth bar (bar 4)
-            {
-                frequencyCompensation = 0.55f;
-            }
-            else if (i == 10) // Target the fifth bar (bar 4)
-            {
-                frequencyCompensation = 0.7f;
-            }
-            else if (i == 11) // Target the fifth bar (bar 4)
-            {
-                frequencyCompensation = 0.8f;
-            }
-            // else if (i >= 6 && i < 16) // Specific targeting of bars between 5 and 15
-            // {
-              //  float t = i / 4f;
-              //  frequencyCompensation = 0.005f + (0.25f * t);
-            // }
-
-            value *= frequencyCompensation;
-
-            // Apply logarithmic scaling adjusted for small values
-            float scaledValue = value * scaleFactor;
-            float amplitude;
-
-            if (scaledValue > 0)
-            {
-                amplitude = Mathf.Log10(1 + scaledValue * 0.5f) * spectrumScale;
-            }
-            else
-            {
-                amplitude = 0;
-            }
-
-            amplitude = Mathf.Pow(amplitude, spectrumExponent);
-            currentHeights[i] = Mathf.Clamp(amplitude, 0.01f, maxBarHeight);
+            amplitude = Mathf.Log(1 + scaledValue) * spectrumScale;
+        }
+        else
+        {
+            amplitude = 0;
         }
 
-        // Apply smoothing across multiple frames
-        float[] smoothedHeights = SmoothBarHeights(currentHeights);
+        // Apply non-linear scaling
+        amplitude = Mathf.Pow(amplitude, spectrumExponent);
+        
+        // Store the height for this bar
+        currentHeights[i] = Mathf.Clamp(amplitude, 0.01f, maxBarHeight);
+    }
 
-        // Update bar visuals with smoothed heights
-        for (int i = 0; i < spectrumSamples; i++)
+    // Apply temporal smoothing from your existing smoothing slider
+    float[] smoothedHeights = SmoothBarHeights(currentHeights);
+
+    // Update bar visuals with smoothed heights
+    for (int i = 0; i < spectrumSamples; i++)
+    {
+        if (spectrumBars[i] == null) continue;
+
+        float barHeight = smoothedHeights[i];
+
+        // Update bar scale
+        Vector3 scale = spectrumBars[i].transform.localScale;
+        scale.y = barHeight;
+        spectrumBars[i].transform.localScale = scale;
+
+        // Position the bar so it grows upward from the base
+        Vector3 position = spectrumBars[i].transform.localPosition;
+        position.y = barHeight / 2f;
+        spectrumBars[i].transform.localPosition = position;
+
+        // Apply rainbow color effect based on the index of the bar
+        float hue = (float)i / spectrumSamples;
+        Color barColor = Color.HSVToRGB(hue, 1f, 1f);
+
+        // Update bar color
+        Renderer renderer = spectrumBars[i].GetComponent<Renderer>();
+        if (renderer != null)
         {
-            if (spectrumBars[i] == null) continue;
-
-            float barHeight = smoothedHeights[i];
-
-            // Update bar scale
-            Vector3 scale = spectrumBars[i].transform.localScale;
-            scale.y = barHeight;
-            spectrumBars[i].transform.localScale = scale;
-
-            // Position the bar so it grows upward from the base
-            Vector3 position = spectrumBars[i].transform.localPosition;
-            position.y = barHeight / 2f;
-            spectrumBars[i].transform.localPosition = position;
-
-            // Apply rainbow color effect based on the index of the bar
-            float hue = (float)i / spectrumSamples; // Spread across the hue spectrum (0 to 1)
-            Color barColor = Color.HSVToRGB(hue, 1f, 1f); // Full saturation, full value
-
-            // Update bar color
-            Renderer renderer = spectrumBars[i].GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                renderer.material.color = barColor;
-            }
+            renderer.material.color = barColor;
         }
     }
+}
     
     // Toggle between line and bar visualization
     public void ToggleVisualizationType()
