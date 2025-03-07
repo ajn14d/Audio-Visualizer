@@ -515,155 +515,117 @@ public class AudioVisualizerController : MonoBehaviour
     }
     
     // Function to update bar heights based on spectrum data
-void UpdateSpectrumBars()
-{
-    if (spectrumBars == null || !barsCreated)
+    void UpdateSpectrumBars()
     {
-        if (barPrefab != null)
+        if (spectrumBars == null || !barsCreated)
         {
-            CreateSpectrumBars();
+            if (barPrefab != null)
+            {
+                CreateSpectrumBars();
+            }
+            return;
         }
-        return;
+
+        // Define logarithmic scaling parameters
+        float scaleFactor = 50f;
+        float logOffset = 1.05f;
+
+        // Create array to hold current bar heights
+        float[] currentHeights = new float[spectrumSamples];
+
+        // Calculate initial heights
+        for (int i = 0; i < spectrumSamples; i++)
+        {
+            // Get the spectrum value and apply threshold to filter out noise
+            float value = smoothedSpectrumData[i];
+            if (value < spectrumMinimumThreshold) value = 0;
+
+            // Calculate frequency compensation based on bar index
+            float frequencyCompensation;
+            float normalizedIndex = i / (float)spectrumSamples;
+            if (i == 3)
+            {
+                frequencyCompensation = 0.02f;
+            }
+            else if (i < 16) // First quarter (0-15) - very low frequencies
+            {
+                frequencyCompensation = Mathf.Lerp(0.01f, 0.1f, i / 16f);
+            }
+            else if (i < 32) // Second quarter (16-31) - low-mid frequencies
+            {
+                frequencyCompensation = Mathf.Lerp(0.1f, 0.3f, (i - 16) / 16f);
+            }
+            else if (i < 48) // Third quarter (32-47) - mid-high frequencies
+            {
+                frequencyCompensation = Mathf.Lerp(0.3f, 0.6f, (i - 32) / 16f);
+            }
+            else // Fourth quarter (48-63) - high frequencies
+            {
+                frequencyCompensation = Mathf.Lerp(0.5f, 1.0f, (i - 48) / 16f);
+            }
+
+            value *= frequencyCompensation;
+
+            // Apply logarithmic scaling adjusted for small values
+            float scaledValue = value * scaleFactor;
+            float amplitude;
+
+            if (scaledValue > 0)
+            {
+                amplitude = Mathf.Log(1 + scaledValue) * spectrumScale;
+            }
+            else
+            {
+                amplitude = 0;
+            }
+
+            // Apply non-linear scaling
+            amplitude = Mathf.Pow(amplitude, spectrumExponent);
+            
+            // Store the height for this bar
+            currentHeights[i] = Mathf.Clamp(amplitude, 0.01f, maxBarHeight);
+        }
+
+        // Apply temporal smoothing from your existing smoothing slider
+        float[] smoothedHeights = SmoothBarHeights(currentHeights);
+
+        // Update bar visuals with smoothed heights
+        for (int i = 0; i < spectrumSamples; i++)
+        {
+            if (spectrumBars[i] == null) continue;
+
+            float barHeight = smoothedHeights[i];
+
+            // Update bar scale
+            Vector3 scale = spectrumBars[i].transform.localScale;
+            scale.y = barHeight;
+            spectrumBars[i].transform.localScale = scale;
+
+            // Position the bar so it grows upward from the base
+            Vector3 position = spectrumBars[i].transform.localPosition;
+            position.y = barHeight / 2f;
+            spectrumBars[i].transform.localPosition = position;
+
+            // Shift the hue over time to create the wave effect
+            if (i >= 3 && i <= 62)
+            {
+                // Shift the hue over time using Mathf.PingPong to create a "wave" effect
+                float waveSpeed = 0.075f; // Speed of the wave
+                float hue = Mathf.PingPong(Time.time * waveSpeed + (i / (float)spectrumSamples), 1f);
+
+                // Apply the color based on the shifted hue
+                Color barColor = Color.HSVToRGB(hue, 1f, 1f);
+
+                // Update bar color
+                Renderer renderer = spectrumBars[i].GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.material.color = barColor;
+                }
+            }
+        }
     }
 
-    // Define logarithmic scaling parameters
-    float scaleFactor = 50f;
-    float logOffset = 1.05f;
-
-    // Create array to hold current bar heights
-    float[] currentHeights = new float[spectrumSamples];
-
-    // Calculate initial heights
-    for (int i = 0; i < spectrumSamples; i++)
-    {
-        // Get the spectrum value and apply threshold to filter out noise
-        float value = smoothedSpectrumData[i];
-        if (value < spectrumMinimumThreshold) value = 0;
-
-        // Calculate frequency compensation based on bar index
-        float frequencyCompensation;
-        float normalizedIndex = i / (float)spectrumSamples;
-
-        /*
-        if (i == 0) // Target the first bar (bar 0)
-        {
-            frequencyCompensation = 0.001f;
-        }
-        else if (i == 1) // Target the second bar (bar 1)
-        {
-            frequencyCompensation = 0.002f;
-        }
-        else if (i == 2) // Target the third bar (bar 2)
-        {
-            frequencyCompensation = 0.004f;
-        }
-        else if (i == 3) // Target the fourth bar (bar 3)
-        {
-            frequencyCompensation = 0.015f;
-        } 
-        else if (i == 4) // Target the fifth bar (bar 4)
-        {
-            frequencyCompensation = 0.02f;
-        }
-        else if (i == 5) // Target the fifth bar (bar 4)
-        {
-            frequencyCompensation = 0.02f;
-        }
-        else if (i == 6) // Target the fifth bar (bar 4)
-        {
-            frequencyCompensation = 0.3f;
-        }
-        else if (i == 7) // Target the fifth bar (bar 4)
-        {
-            frequencyCompensation = 0.35f;
-        }
-         else if (i == 8) // Target the fifth bar (bar 4)
-        {
-            frequencyCompensation = 0.45f;
-        }
-        else if (i == 9) // Target the fifth bar (bar 4)
-        {
-            frequencyCompensation = 0.55f;
-         }
-        else if (i == 10) // Target the fifth bar (bar 4)
-        {
-            frequencyCompensation = 0.7f;
-        }
-        else if (i == 11) // Target the fifth bar (bar 4)
-        {
-            frequencyCompensation = 0.8f;
-        } */
-        if (i < 16) // First quarter (0-15) - very low frequencies
-        {
-            frequencyCompensation = Mathf.Lerp(0.01f, 0.1f, i / 16f);
-        }
-        else if (i < 32) // Second quarter (16-31) - low-mid frequencies
-        {
-            frequencyCompensation = Mathf.Lerp(0.1f, 0.3f, (i - 16) / 16f);
-        }
-        else if (i < 48) // Third quarter (32-47) - mid-high frequencies
-        {
-            frequencyCompensation = Mathf.Lerp(0.3f, 0.6f, (i - 32) / 16f);
-        }
-        else // Fourth quarter (48-63) - high frequencies
-        {
-            frequencyCompensation = Mathf.Lerp(0.6f, 1.0f, (i - 48) / 16f);
-        }
-
-        value *= frequencyCompensation;
-
-        // Apply logarithmic scaling adjusted for small values
-        float scaledValue = value * scaleFactor;
-        float amplitude;
-
-        if (scaledValue > 0)
-        {
-            amplitude = Mathf.Log(1 + scaledValue) * spectrumScale;
-        }
-        else
-        {
-            amplitude = 0;
-        }
-
-        // Apply non-linear scaling
-        amplitude = Mathf.Pow(amplitude, spectrumExponent);
-        
-        // Store the height for this bar
-        currentHeights[i] = Mathf.Clamp(amplitude, 0.01f, maxBarHeight);
-    }
-
-    // Apply temporal smoothing from your existing smoothing slider
-    float[] smoothedHeights = SmoothBarHeights(currentHeights);
-
-    // Update bar visuals with smoothed heights
-    for (int i = 0; i < spectrumSamples; i++)
-    {
-        if (spectrumBars[i] == null) continue;
-
-        float barHeight = smoothedHeights[i];
-
-        // Update bar scale
-        Vector3 scale = spectrumBars[i].transform.localScale;
-        scale.y = barHeight;
-        spectrumBars[i].transform.localScale = scale;
-
-        // Position the bar so it grows upward from the base
-        Vector3 position = spectrumBars[i].transform.localPosition;
-        position.y = barHeight / 2f;
-        spectrumBars[i].transform.localPosition = position;
-
-        // Apply rainbow color effect based on the index of the bar
-        float hue = (float)i / spectrumSamples;
-        Color barColor = Color.HSVToRGB(hue, 1f, 1f);
-
-        // Update bar color
-        Renderer renderer = spectrumBars[i].GetComponent<Renderer>();
-        if (renderer != null)
-        {
-            renderer.material.color = barColor;
-        }
-    }
-}
     
     // Toggle between line and bar visualization
     public void ToggleVisualizationType()
