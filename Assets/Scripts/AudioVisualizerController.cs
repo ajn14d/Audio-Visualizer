@@ -545,7 +545,7 @@ public class AudioVisualizerController : MonoBehaviour
             float normalizedIndex = i / (float)spectrumSamples;
             if (i == 3)
             {
-                frequencyCompensation = 0.02f;
+                frequencyCompensation = 0.015f;
             }
             else if (i < 16) // First quarter (0-15) - very low frequencies
             {
@@ -689,7 +689,7 @@ public class AudioVisualizerController : MonoBehaviour
         // Toggle visibility between spectrum bars and waveform display
 
         // Check if spectrum bars are currently active
-        bool spectrumBarsActive = spectrumBars != null && spectrumBars[0].activeSelf; // Assuming spectrumBars is an array and bars[0] can be used to check visibility
+        bool spectrumBarsActive = spectrumBars != null && spectrumBars[5].activeSelf; // Assuming spectrumBars is an array and bars[0] can be used to check visibility
 
         // Switch to Spectrum and sliders
         if (spectrumBarsActive)
@@ -734,8 +734,18 @@ public class AudioVisualizerController : MonoBehaviour
 
             foreach (GameObject bar in spectrumBars)
             {
-                bar.SetActive(true); // Enable spectrum bars
+                int index = System.Array.IndexOf(spectrumBars, bar); // Get the index of the current bar
+
+                if (index == 0 || index == 1 || index == 2 || index == 63)
+                {
+                    bar.SetActive(false); // Disable specific bars
+                }
+                else
+                {
+                    bar.SetActive(true); // Enable all other spectrum bars
+                }
             }
+
             // Show SpectrumScaleSlider/spectrumExponentSlider and hide WaveHeightSlider/WaveDensitySlider
             if (spectrumScaleSlider != null)
             {
