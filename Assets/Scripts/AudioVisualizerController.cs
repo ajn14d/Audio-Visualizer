@@ -50,7 +50,7 @@ public class AudioVisualizerController : MonoBehaviour
     public Color barEndColor = new Color(0f, 1f, 1f); // Color at the top of bars
     private GameObject[] spectrumBars; // Array to hold bar GameObjects
     private bool barsCreated = false; // Flag to track if bars have been created
-
+    public int barColorSelect = 0; // varible to switch bar color
     // Bar smoothing variables
     public int barSmoothingSamples = 2; // Number of bars to average together
     private Queue<float[]> barHistoryBuffer; // Buffer to store previous bar heights
@@ -197,7 +197,6 @@ public class AudioVisualizerController : MonoBehaviour
             
             // Make sure the spectrum line renderer is enabled
             spectrumLineRenderer.enabled = true;
-            
             Debug.Log("Spectrum LineRenderer configured with " + spectrumSamples + " points");
         }
         else
@@ -246,8 +245,36 @@ public class AudioVisualizerController : MonoBehaviour
             float x = ((float)i / numSamples) * (10f * waveDensity) - (10f * waveDensity / 2f); // Center and scale by density
             float y = smoothedSamples[i] * waveformHeight; // Scale waveform height
             lineRenderer.SetPosition(i, new Vector3(x, y, 0));
-        }
 
+            // Set colors based on barColorSelect
+            if (barColorSelect == 0)
+            {
+                // Shift the hue over time using Mathf.PingPong to create a "wave" effect
+                float waveSpeed = 0.075f; // Speed of the wave
+                float hue = Mathf.PingPong(Time.time * waveSpeed + (i / (float)numSamples), 1f);
+
+                // Apply the color based on the shifted hue (rainbow effect)
+                Color rainbowColor = Color.HSVToRGB(hue, 1f, 1f);
+
+                // Set the LineRenderer's color dynamically for each point in the line
+                lineRenderer.startColor = rainbowColor;
+                lineRenderer.endColor = rainbowColor;
+            }
+            else if (barColorSelect == 1) lineRenderer.startColor = lineRenderer.endColor = Color.red;
+            else if (barColorSelect == 2) lineRenderer.startColor = lineRenderer.endColor = new Color(1f, 0.65f, 0f); // Orange
+            else if (barColorSelect == 3) lineRenderer.startColor = lineRenderer.endColor = Color.yellow;
+            else if (barColorSelect == 4) lineRenderer.startColor = lineRenderer.endColor = Color.green;
+            else if (barColorSelect == 5) lineRenderer.startColor = lineRenderer.endColor = new Color(0f, 0.5f, 0.5f); // Teal
+            else if (barColorSelect == 6) lineRenderer.startColor = lineRenderer.endColor = new Color(0.68f, 0.85f, 0.9f); // Light Blue
+            else if (barColorSelect == 7) lineRenderer.startColor = lineRenderer.endColor = Color.cyan;
+            else if (barColorSelect == 8) lineRenderer.startColor = lineRenderer.endColor = Color.blue;
+            else if (barColorSelect == 9) lineRenderer.startColor = lineRenderer.endColor = new Color(0.5f, 0f, 0.5f); // Purple
+            else if (barColorSelect == 10) lineRenderer.startColor = lineRenderer.endColor = Color.magenta;
+            else if (barColorSelect == 11) lineRenderer.startColor = lineRenderer.endColor = new Color(1f, 0.75f, 0.8f); // Pink
+            else if (barColorSelect == 12) lineRenderer.startColor = lineRenderer.endColor = new Color(0.6f, 0.3f, 0f); // Brown
+            else if (barColorSelect == 13) lineRenderer.startColor = lineRenderer.endColor = Color.white;
+            else if (barColorSelect == 14) lineRenderer.startColor = lineRenderer.endColor = new Color(0.75f, 0.75f, 0.75f); // Gray
+        }
         // Get spectrum data and update spectrum visualization
         UpdateSpectrumVisualization();
         
@@ -606,21 +633,36 @@ public class AudioVisualizerController : MonoBehaviour
             position.y = barHeight / 2f;
             spectrumBars[i].transform.localPosition = position;
 
-            // Shift the hue over time to create the wave effect
+            // Apply color to the bar
             if (i >= 3 && i <= 62)
             {
-                // Shift the hue over time using Mathf.PingPong to create a "wave" effect
-                float waveSpeed = 0.075f; // Speed of the wave
-                float hue = Mathf.PingPong(Time.time * waveSpeed + (i / (float)spectrumSamples), 1f);
-
-                // Apply the color based on the shifted hue
-                Color barColor = Color.HSVToRGB(hue, 1f, 1f);
-
-                // Update bar color
                 Renderer renderer = spectrumBars[i].GetComponent<Renderer>();
                 if (renderer != null)
                 {
-                    renderer.material.color = barColor;
+                    if (barColorSelect == 0)
+                    {
+                        // Shift the hue over time using Mathf.PingPong to create a "wave" effect
+                        float waveSpeed = 0.075f; // Speed of the wave
+                        float hue = Mathf.PingPong(Time.time * waveSpeed + (i / (float)spectrumSamples), 1f);
+
+                        // Apply the color based on the shifted hue
+                        renderer.material.color = Color.HSVToRGB(hue, 1f, 1f);
+                    }
+                    else if (barColorSelect == 1) renderer.material.color = Color.red;
+                    else if (barColorSelect == 2) renderer.material.color = new Color(1f, 0.65f, 0f); // Orange
+                    else if (barColorSelect == 3) renderer.material.color = Color.yellow;
+                    else if (barColorSelect == 4) renderer.material.color = Color.green;
+                    else if (barColorSelect == 5) renderer.material.color = new Color(0f, 0.5f, 0.5f); // Teal
+                    else if (barColorSelect == 6) renderer.material.color = new Color(0.68f, 0.85f, 0.9f); // Light Blue
+                    else if (barColorSelect == 7) renderer.material.color = Color.cyan;
+                    else if (barColorSelect == 8) renderer.material.color = Color.blue;
+                    else if (barColorSelect == 9) renderer.material.color = new Color(0.5f, 0f, 0.5f); // Purple
+                    else if (barColorSelect == 10) renderer.material.color = Color.magenta;
+                    else if (barColorSelect == 11) renderer.material.color = new Color(1f, 0.75f, 0.8f); // Pink
+                    else if (barColorSelect == 12) renderer.material.color = new Color(0.6f, 0.3f, 0f); // Brown
+                    else if (barColorSelect == 13) renderer.material.color = Color.white;
+                    else if (barColorSelect == 14) renderer.material.color = new Color(0.75f, 0.75f, 0.75f); // Gray
+                    else if (barColorSelect == 15) barColorSelect = 0; // Reset to rainbow mode
                 }
             }
         }
@@ -790,7 +832,11 @@ public class AudioVisualizerController : MonoBehaviour
         audioSource.loop = true;
         audioSource.Play();
     }
-
+    public void ColorSwitch()
+    {
+        barColorSelect += 1;
+        Debug.Log(barColorSelect);
+    }
     void StartUpText()
     {
         // Start the coroutine to disable startUpText after 10 seconds
