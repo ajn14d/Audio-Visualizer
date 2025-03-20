@@ -52,7 +52,7 @@ public class AudioVisualizerController : MonoBehaviour
     public Color barEndColor = new Color(0f, 1f, 1f); // Color at the top of bars
     private GameObject[] spectrumBars; // Array to hold bar GameObjects
     private bool barsCreated = false; // Flag to track if bars have been created
-    public int barColorSelect = 0; // varible to switch bar color
+    public int colorSelect = 0; // varible to switch bar color
     // Bar smoothing variables
     public int barSmoothingSamples = 2; // Number of bars to average together
     private Queue<float[]> barHistoryBuffer; // Buffer to store previous bar heights
@@ -267,7 +267,7 @@ public class AudioVisualizerController : MonoBehaviour
             lineRenderer.SetPosition(i, new Vector3(x, y, 0));
 
             // Set colors based on barColorSelect
-            if (barColorSelect == 0)
+            if (colorSelect == 0)
             {
                 // Shift the hue over time using Mathf.PingPong to create a "wave" effect
                 float waveSpeed = 0.075f; // Speed of the wave
@@ -280,20 +280,20 @@ public class AudioVisualizerController : MonoBehaviour
                 lineRenderer.startColor = rainbowColor;
                 lineRenderer.endColor = rainbowColor;
             }
-            else if (barColorSelect == 1) lineRenderer.startColor = lineRenderer.endColor = Color.red;
-            else if (barColorSelect == 2) lineRenderer.startColor = lineRenderer.endColor = new Color(1f, 0.65f, 0f); // Orange
-            else if (barColorSelect == 3) lineRenderer.startColor = lineRenderer.endColor = Color.yellow;
-            else if (barColorSelect == 4) lineRenderer.startColor = lineRenderer.endColor = Color.green;
-            else if (barColorSelect == 5) lineRenderer.startColor = lineRenderer.endColor = new Color(0f, 0.5f, 0.5f); // Teal
-            else if (barColorSelect == 6) lineRenderer.startColor = lineRenderer.endColor = new Color(0.68f, 0.85f, 0.9f); // Light Blue
-            else if (barColorSelect == 7) lineRenderer.startColor = lineRenderer.endColor = Color.cyan;
-            else if (barColorSelect == 8) lineRenderer.startColor = lineRenderer.endColor = Color.blue;
-            else if (barColorSelect == 9) lineRenderer.startColor = lineRenderer.endColor = new Color(0.5f, 0f, 0.5f); // Purple
-            else if (barColorSelect == 10) lineRenderer.startColor = lineRenderer.endColor = Color.magenta;
-            else if (barColorSelect == 11) lineRenderer.startColor = lineRenderer.endColor = new Color(1f, 0.75f, 0.8f); // Pink
-            else if (barColorSelect == 12) lineRenderer.startColor = lineRenderer.endColor = new Color(0.6f, 0.3f, 0f); // Brown
-            else if (barColorSelect == 13) lineRenderer.startColor = lineRenderer.endColor = Color.white;
-            else if (barColorSelect == 14) lineRenderer.startColor = lineRenderer.endColor = new Color(0.75f, 0.75f, 0.75f); // Gray
+            else if (colorSelect == 1) lineRenderer.startColor = lineRenderer.endColor = Color.red;
+            else if (colorSelect == 2) lineRenderer.startColor = lineRenderer.endColor = new Color(1f, 0.65f, 0f); // Orange
+            else if (colorSelect == 3) lineRenderer.startColor = lineRenderer.endColor = Color.yellow;
+            else if (colorSelect == 4) lineRenderer.startColor = lineRenderer.endColor = Color.green;
+            else if (colorSelect == 5) lineRenderer.startColor = lineRenderer.endColor = new Color(0f, 0.5f, 0.5f); // Teal
+            else if (colorSelect == 6) lineRenderer.startColor = lineRenderer.endColor = new Color(0.68f, 0.85f, 0.9f); // Light Blue
+            else if (colorSelect == 7) lineRenderer.startColor = lineRenderer.endColor = Color.cyan;
+            else if (colorSelect == 8) lineRenderer.startColor = lineRenderer.endColor = Color.blue;
+            else if (colorSelect == 9) lineRenderer.startColor = lineRenderer.endColor = new Color(0.5f, 0f, 0.5f); // Purple
+            else if (colorSelect == 10) lineRenderer.startColor = lineRenderer.endColor = Color.magenta;
+            else if (colorSelect == 11) lineRenderer.startColor = lineRenderer.endColor = new Color(1f, 0.75f, 0.8f); // Pink
+            else if (colorSelect == 12) lineRenderer.startColor = lineRenderer.endColor = new Color(0.6f, 0.3f, 0f); // Brown
+            else if (colorSelect == 13) lineRenderer.startColor = lineRenderer.endColor = Color.white;
+            else if (colorSelect == 14) lineRenderer.startColor = lineRenderer.endColor = new Color(0.75f, 0.75f, 0.75f); // Gray
         }
         // Get spectrum data and update spectrum visualization
         UpdateSpectrumVisualization();
@@ -666,7 +666,7 @@ public class AudioVisualizerController : MonoBehaviour
                 Renderer renderer = spectrumBars[i].GetComponent<Renderer>();
                 if (renderer != null)
                 {
-                    if (barColorSelect == 0)
+                    if (colorSelect == 0)
                     {
                         // Shift the hue over time using Mathf.PingPong to create a "wave" effect
                         float waveSpeed = 0.075f; // Speed of the wave
@@ -675,21 +675,21 @@ public class AudioVisualizerController : MonoBehaviour
                         // Apply the color based on the shifted hue
                         renderer.material.color = Color.HSVToRGB(hue, 1f, 1f);
                     }
-                    else if (barColorSelect == 1) renderer.material.color = Color.red;
-                    else if (barColorSelect == 2) renderer.material.color = new Color(1f, 0.65f, 0f); // Orange
-                    else if (barColorSelect == 3) renderer.material.color = Color.yellow;
-                    else if (barColorSelect == 4) renderer.material.color = Color.green;
-                    else if (barColorSelect == 5) renderer.material.color = new Color(0f, 0.5f, 0.5f); // Teal
-                    else if (barColorSelect == 6) renderer.material.color = new Color(0.68f, 0.85f, 0.9f); // Light Blue
-                    else if (barColorSelect == 7) renderer.material.color = Color.cyan;
-                    else if (barColorSelect == 8) renderer.material.color = Color.blue;
-                    else if (barColorSelect == 9) renderer.material.color = new Color(0.5f, 0f, 0.5f); // Purple
-                    else if (barColorSelect == 10) renderer.material.color = Color.magenta;
-                    else if (barColorSelect == 11) renderer.material.color = new Color(1f, 0.75f, 0.8f); // Pink
-                    else if (barColorSelect == 12) renderer.material.color = new Color(0.6f, 0.3f, 0f); // Brown
-                    else if (barColorSelect == 13) renderer.material.color = Color.white;
-                    else if (barColorSelect == 14) renderer.material.color = new Color(0.75f, 0.75f, 0.75f); // Gray
-                    else if (barColorSelect == 15) barColorSelect = 0; // Reset to rainbow mode
+                    else if (colorSelect == 1) renderer.material.color = Color.red;
+                    else if (colorSelect == 2) renderer.material.color = new Color(1f, 0.65f, 0f); // Orange
+                    else if (colorSelect == 3) renderer.material.color = Color.yellow;
+                    else if (colorSelect == 4) renderer.material.color = Color.green;
+                    else if (colorSelect == 5) renderer.material.color = new Color(0f, 0.5f, 0.5f); // Teal
+                    else if (colorSelect == 6) renderer.material.color = new Color(0.68f, 0.85f, 0.9f); // Light Blue
+                    else if (colorSelect == 7) renderer.material.color = Color.cyan;
+                    else if (colorSelect == 8) renderer.material.color = Color.blue;
+                    else if (colorSelect == 9) renderer.material.color = new Color(0.5f, 0f, 0.5f); // Purple
+                    else if (colorSelect == 10) renderer.material.color = Color.magenta;
+                    else if (colorSelect == 11) renderer.material.color = new Color(1f, 0.75f, 0.8f); // Pink
+                    else if (colorSelect == 12) renderer.material.color = new Color(0.6f, 0.3f, 0f); // Brown
+                    else if (colorSelect == 13) renderer.material.color = Color.white;
+                    else if (colorSelect == 14) renderer.material.color = new Color(0.75f, 0.75f, 0.75f); // Gray
+                    else if (colorSelect == 15) colorSelect = 0; // Reset to rainbow mode
                 }
             }
         }
@@ -871,8 +871,8 @@ public class AudioVisualizerController : MonoBehaviour
     }
     public void ColorSwitch()
     {
-        barColorSelect += 1;
-        Debug.Log(barColorSelect);
+        colorSelect += 1;
+        Debug.Log(colorSelect);
     }
     void StartUpText()
     {
