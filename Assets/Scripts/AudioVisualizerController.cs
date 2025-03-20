@@ -6,6 +6,7 @@ using System.Collections;
 public class AudioVisualizerController : MonoBehaviour
 {
     public Text startUpText;
+    public Canvas canvas;
     public AudioSource audioSource;
     public LineRenderer lineRenderer;
     public Slider waveHeightSlider;
@@ -278,6 +279,13 @@ public class AudioVisualizerController : MonoBehaviour
         // Get spectrum data and update spectrum visualization
         UpdateSpectrumVisualization();
         
+        // Check if the "H" key is pressed
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            // Toggle the Canvas visibility
+            canvas.enabled = !canvas.enabled;
+        }
+
         // Debug output
         if (debugOutput)
         {
