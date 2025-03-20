@@ -11,6 +11,7 @@ public class AudioVisualizerController : MonoBehaviour
     public LineRenderer lineRenderer;
     public Slider waveHeightSlider;
     public Slider waveDensitySlider;
+    public Slider waveWidthSlider;
     public Slider smoothingSlider;
     public Slider spectrumScaleSlider;
     public Slider spectrumExponentSlider;
@@ -105,7 +106,25 @@ public class AudioVisualizerController : MonoBehaviour
         {
             Debug.LogWarning("No WaveDensitySlider assigned! Wave density cannot be adjusted.");
         }
+        if (waveWidthSlider != null)
+            {
+                waveWidthSlider.minValue = 0.05f;
+                waveWidthSlider.maxValue = 35.0f;
+                waveWidthSlider.value = lineRenderer.widthMultiplier; // Set initial value
 
+                // Update the LineRenderer width when the slider changes
+                waveWidthSlider.onValueChanged.AddListener((value) =>
+                {
+                    if (lineRenderer != null)
+                    {
+                        lineRenderer.widthMultiplier = value;
+                    }
+                });
+            }
+        else
+            {
+                Debug.LogWarning("No WaveWidthSlider assigned! Wave width cannot be adjusted.");
+            }
         if (smoothingSlider != null)
         {
             smoothingSlider.minValue = 1f;
@@ -773,6 +792,11 @@ public class AudioVisualizerController : MonoBehaviour
             {
                 waveDensitySlider.gameObject.SetActive(true); // Show WaveDensitySlider
             }
+
+            if (waveWidthSlider != null)
+            {
+                waveWidthSlider.gameObject.SetActive(true); // Show WaveDensitySlider
+            }
         }
         // If waveform display is active, hide it and show the spectrum bars
         else
@@ -815,6 +839,11 @@ public class AudioVisualizerController : MonoBehaviour
             if (waveDensitySlider != null)
             {
                 waveDensitySlider.gameObject.SetActive(false); // Hide WaveDensitySlider
+            }
+
+            if (waveWidthSlider != null)
+            {
+                waveWidthSlider.gameObject.SetActive(false); // Show WaveDensitySlider
             }
         }
     }
