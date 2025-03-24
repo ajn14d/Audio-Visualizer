@@ -7,6 +7,7 @@ public class AudioVisualizerController : MonoBehaviour
 {
     public Text startUpText;
     public Canvas canvas;
+    public Camera camera;
     public AudioSource audioSource;
     public LineRenderer lineRenderer;
     public Slider waveHeightSlider;
@@ -52,7 +53,8 @@ public class AudioVisualizerController : MonoBehaviour
     public Color barEndColor = new Color(0f, 1f, 1f); // Color at the top of bars
     private GameObject[] spectrumBars; // Array to hold bar GameObjects
     private bool barsCreated = false; // Flag to track if bars have been created
-    public int colorSelect = 0; // varible to switch bar color
+    public int colorSelect = 0; // varible to switch visualizer color
+    public int backgroundSelect = 0; // varible to switch background color
     // Bar smoothing variables
     public int barSmoothingSamples = 2; // Number of bars to average together
     private Queue<float[]> barHistoryBuffer; // Buffer to store previous bar heights
@@ -293,7 +295,7 @@ public class AudioVisualizerController : MonoBehaviour
             else if (colorSelect == 11) lineRenderer.startColor = lineRenderer.endColor = new Color(1f, 0.75f, 0.8f); // Pink
             else if (colorSelect == 12) lineRenderer.startColor = lineRenderer.endColor = new Color(0.6f, 0.3f, 0f); // Brown
             else if (colorSelect == 13) lineRenderer.startColor = lineRenderer.endColor = Color.white;
-            else if (colorSelect == 14) lineRenderer.startColor = lineRenderer.endColor = new Color(0.75f, 0.75f, 0.75f); // Gray
+            else if (colorSelect == 14) lineRenderer.startColor = lineRenderer.endColor = new Color(0.75f, 0.75f, 0.75f); // Gray  
         }
         // Get spectrum data and update spectrum visualization
         UpdateSpectrumVisualization();
@@ -674,6 +676,14 @@ public class AudioVisualizerController : MonoBehaviour
 
                         // Apply the color based on the shifted hue
                         renderer.material.color = Color.HSVToRGB(hue, 1f, 1f);
+
+                         // If backgroundSelect is 1, set the background to the complementary color
+                        if (backgroundSelect == 1)
+                        {
+                            float oppositeHue = (hue + 0.5f) % 1f; // Shift hue by 180 degrees (0.5 in HSV space)
+                            Color backgroundColor = Color.HSVToRGB(oppositeHue, 1f, 1f);
+                            camera.backgroundColor = backgroundColor;
+                        }
                     }
                     else if (colorSelect == 1) renderer.material.color = Color.red;
                     else if (colorSelect == 2) renderer.material.color = new Color(1f, 0.65f, 0f); // Orange
@@ -873,6 +883,36 @@ public class AudioVisualizerController : MonoBehaviour
     {
         colorSelect += 1;
         Debug.Log(colorSelect);
+    }
+    public void BackgroundColor()
+    {
+        backgroundSelect += 1;
+        Debug.Log(backgroundSelect);
+
+        if (backgroundSelect == 0)
+            {
+                camera.backgroundColor = Color.black;
+            }
+        else if (backgroundSelect == 1)
+            {
+                Debug.Log("Background color changed");
+
+                // Get the current color of the line or bars
+                Color currentColor = lineRenderer.startColor; // Or use the bar's color
+
+                // Calculate the complementary color
+                Color complementaryColor = new Color(1f - currentColor.r, 1f - currentColor.g, 1f - currentColor.b);
+
+                // Apply to the background (assuming a Camera background or UI Image)
+                camera.backgroundColor = complementaryColor; // For Camera background
+                // backgroundImage.color = complementaryColor; // If using a UI Image as background
+            }
+        else if (backgroundSelect == 2)
+            {
+                backgroundSelect = 0;
+                camera.backgroundColor = Color.black;
+            }
+
     }
     void StartUpText()
     {
