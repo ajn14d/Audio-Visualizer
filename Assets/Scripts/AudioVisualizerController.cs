@@ -16,6 +16,7 @@ public class AudioVisualizerController : MonoBehaviour
     public Slider smoothingSlider;
     public Slider spectrumScaleSlider;
     public Slider spectrumExponentSlider;
+    public Slider hueShiftSpeedSlider;
     public Dropdown deviceDropdown; 
     public int selectedDeviceIndex = 1;
     public int sampleRate = 44100;
@@ -43,6 +44,7 @@ public class AudioVisualizerController : MonoBehaviour
     public float spectrumMinimumThreshold = 0.00001f; // Minimum threshold to filter out noise
     public float spectrumExponent = 0.5f; // Power exponent for non-linear scaling (0.5 = square root)
     public float spectrumVerticalOffset = -3f; // Vertical position offset
+    public float hueShiftSpeed = 0.02f; // Speed of hue shifting
     
     // Bar visualization variables
     public GameObject barPrefab; // Assign a cube or other primitive in inspector
@@ -163,6 +165,18 @@ public class AudioVisualizerController : MonoBehaviour
             Debug.LogWarning("No SpectrumExponentSlider assigned! Spectrum exponent cannot be adjusted.");
         }
 
+        if (hueShiftSpeedSlider != null)
+        {
+            hueShiftSpeedSlider.minValue = 0.0f;
+            hueShiftSpeedSlider.maxValue = 0.2f;
+            hueShiftSpeedSlider.value = hueShiftSpeed;
+            hueShiftSpeedSlider.onValueChanged.AddListener((value) => hueShiftSpeed = value);
+        }
+        else
+        {
+            Debug.LogWarning("No hueShiftSpeedSlider assigned! hue shift speed cannot be adjusted.");
+        }
+
          // Get available microphone devices
         string[] devices = Microphone.devices;
         if (devices.Length == 0)
@@ -272,8 +286,7 @@ public class AudioVisualizerController : MonoBehaviour
             if (colorSelect == 0)
             {
                 // Shift the hue over time using Mathf.PingPong to create a "wave" effect
-                float waveSpeed = 0.075f; // Speed of the wave
-                float hue = Mathf.PingPong(Time.time * waveSpeed + (i / (float)numSamples), 1f);
+                float hue = Mathf.PingPong(Time.time * hueShiftSpeed + (i / (float)numSamples), 1f);
 
                 // Apply the color based on the shifted hue (rainbow effect)
                 Color rainbowColor = Color.HSVToRGB(hue, 1f, 1f);
@@ -671,14 +684,13 @@ public class AudioVisualizerController : MonoBehaviour
                     if (colorSelect == 0)
                     {
                         // Shift the hue over time using Mathf.PingPong to create a "wave" effect
-                        float waveSpeed = 0.075f; // Speed of the wave
-                        float hue = Mathf.PingPong(Time.time * waveSpeed + (i / (float)spectrumSamples), 1f);
+                        float hue = Mathf.PingPong(Time.time * hueShiftSpeed + (i / (float)spectrumSamples), 1f);
 
                         // Apply the color based on the shifted hue
                         renderer.material.color = Color.HSVToRGB(hue, 1f, 1f);
 
                          // If backgroundSelect is 1, set the background to the complementary color
-                        if (backgroundSelect == 1)
+                        if (backgroundSelect == 1 && hueShiftSpeed > 0)
                             {
                                 float oppositeHue = (hue + 0.5f) % 1f; // Shift hue by 180 degrees
                                 float desaturatedSaturation = 0.8f; // Reduce saturation for a "washed out" effect
