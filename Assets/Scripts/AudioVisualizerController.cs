@@ -679,11 +679,14 @@ public class AudioVisualizerController : MonoBehaviour
 
                          // If backgroundSelect is 1, set the background to the complementary color
                         if (backgroundSelect == 1)
-                        {
-                            float oppositeHue = (hue + 0.5f) % 1f; // Shift hue by 180 degrees (0.5 in HSV space)
-                            Color backgroundColor = Color.HSVToRGB(oppositeHue, 1f, 1f);
-                            camera.backgroundColor = backgroundColor;
-                        }
+                            {
+                                float oppositeHue = (hue + 0.5f) % 1f; // Shift hue by 180 degrees
+                                float desaturatedSaturation = 0.8f; // Reduce saturation for a "washed out" effect
+                                float dimmedBrightness = 0.6f; // Lower brightness so it's not too intense
+
+                                Color backgroundColor = Color.HSVToRGB(oppositeHue, desaturatedSaturation, dimmedBrightness);
+                                camera.backgroundColor = backgroundColor;
+                            }
                     }
                     else if (colorSelect == 1) renderer.material.color = Color.red;
                     else if (colorSelect == 2) renderer.material.color = new Color(1f, 0.65f, 0f); // Orange
@@ -894,19 +897,30 @@ public class AudioVisualizerController : MonoBehaviour
                 camera.backgroundColor = Color.black;
             }
         else if (backgroundSelect == 1)
-            {
-                Debug.Log("Background color changed");
+        {
+            Debug.Log("Background color changed");
 
-                // Get the current color of the line or bars
-                Color currentColor = lineRenderer.startColor; // Or use the bar's color
+            // Get the current color of the line or bars
+            Color currentColor = lineRenderer.startColor; // Or use the bar's color
 
-                // Calculate the complementary color
-                Color complementaryColor = new Color(1f - currentColor.r, 1f - currentColor.g, 1f - currentColor.b);
+            // Convert the color to HSV
+            Color.RGBToHSV(currentColor, out float h, out float s, out float v);
 
-                // Apply to the background (assuming a Camera background or UI Image)
-                camera.backgroundColor = complementaryColor; // For Camera background
-                // backgroundImage.color = complementaryColor; // If using a UI Image as background
-            }
+            // Adjust saturation and brightness to "wash out" the complementary color
+            float desaturatedSaturation = 0.8f; // Reduce saturation for a "washed out" effect
+            float dimmedBrightness = 0.6f; // Lower brightness so it's not too intense
+
+            // Calculate the complementary hue (opposite side of color wheel)
+            float complementaryHue = (h + 0.5f) % 1f; // Shift hue by 180 degrees
+
+            // Convert back to RGB with adjusted saturation and brightness
+            Color complementaryColor = Color.HSVToRGB(complementaryHue, desaturatedSaturation, dimmedBrightness);
+
+            // Apply to the background (assuming a Camera background or UI Image)
+            camera.backgroundColor = complementaryColor; // For Camera background
+            // backgroundImage.color = complementaryColor; // If using a UI Image as background
+        }
+
         else if (backgroundSelect == 2)
             {
                 backgroundSelect = 0;
