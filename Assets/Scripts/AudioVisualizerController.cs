@@ -206,10 +206,7 @@ public class AudioVisualizerController : MonoBehaviour
         string selectedDevice = devices[selectedDeviceIndex];
 
         // Start recording
-        audioSource.clip = Microphone.Start(selectedDevice, true, recordingLength, sampleRate);
-        while (Microphone.GetPosition(selectedDevice) <= 0) { } // Wait for recording to start
-        audioSource.loop = true;
-        audioSource.Play();
+        ResetRecording();
 
         // Initialize sample buffers
         samples = new float[numSamples];
@@ -261,7 +258,7 @@ public class AudioVisualizerController : MonoBehaviour
     void Update()
     {
         // Ensure AudioClip is valid before trying to read data
-        if (audioSource.clip == null || !audioSource.clip.isReadyToPlay)
+        if (audioSource.clip == null || !Microphone.IsRecording(Microphone.devices[selectedDeviceIndex]))
         {
             Debug.LogWarning("AudioClip is not ready yet!");
             return;
@@ -877,23 +874,11 @@ public class AudioVisualizerController : MonoBehaviour
     {
         // Update the selected device index
         selectedDeviceIndex = index;
-
-        // Get the name of the selected device
-        string selectedDevice = Microphone.devices[selectedDeviceIndex];
-        Debug.Log("Selected microphone: " + selectedDevice);
-
-        // Stop any ongoing recording with the previous device
-        if (Microphone.IsRecording(null))
-        {
-            Microphone.End(Microphone.devices[selectedDeviceIndex - 1]); // Stop the previous device if recording
-        }
-
-        // Start recording with the newly selected device
-        audioSource.clip = Microphone.Start(selectedDevice, true, recordingLength, sampleRate);
-        while (Microphone.GetPosition(selectedDevice) <= 0) { } // Wait for recording to start
-        audioSource.loop = true;
-        audioSource.Play();
+        
+        // Call ResetRecording to handle stopping and restarting cleanly
+        ResetRecording();
     }
+    
     public void ColorSwitch()
     {
         colorSelect += 1;
@@ -957,6 +942,71 @@ public class AudioVisualizerController : MonoBehaviour
             startUpText.gameObject.SetActive(false);
             Debug.Log("startUpText has been disabled after 10 seconds.");
         }
+    }
+
+    public void ResetRecording()
+    {
+        StartCoroutine(ResetMicrophone());
+    }
+
+    private IEnumerator ResetMicrophone()
+    {
+        if (Microphone.IsRecording(Microphone.devices[selectedDeviceIndex]))
+        {
+            Microphone.End(Microphone.devices[selectedDeviceIndex]);
+        }
+
+        audioSource.Stop();
+        
+        // Ensure the audio clip is null to remove any old data
+        audioSource.clip = null;
+
+        // Short delay to let Unity clear the buffer
+        yield return new WaitForSeconds(0.1f);
+
+        // Get the name of the selected device
+        string selectedDevice = Microphone.devices[selectedDeviceIndex];
+        Debug.Log("Restarting recording with microphone: " + selectedDevice);
+        
+        // Start recording with the newly selected device
+        audioSource.clip = Microphone.Start(selectedDevice, true, recordingLength, sampleRate);
+
+        // Wait for the microphone to start properly
+        int timeout = 50;
+        while (Microphone.GetPosition(selectedDevice) <= 0 && timeout > 0)
+        {
+            yield return null;
+            timeout--;
+        }
+
+        if (timeout <= 0)
+        {
+            Debug.LogError("Microphone failed to start.");
+            yield break;
+        }
+
+        // Start playback smoothly
+        yield return new WaitForSeconds(0.1f); // Extra delay to avoid crackling
+        audioSource.loop = true;
+        audioSource.Play();
+
+        // Fade in the volume to prevent sudden waveform artifacts
+        StartCoroutine(FadeInAudio());
+    }
+
+    // Smoothly fade in audio after reset
+    private IEnumerator FadeInAudio()
+    {
+        float duration = 0.5f; // Fade-in duration in seconds
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            audioSource.volume = Mathf.Lerp(0f, 1f, elapsedTime / duration);
+            yield return null;
+        }
+        audioSource.volume = 1f;
     }
 
     // Clean up when the component is destroyed
